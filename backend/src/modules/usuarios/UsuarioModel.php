@@ -49,41 +49,6 @@ class UsuarioModel
             $stmtUsuario->execute([$data['nombres'], $data['apellidos'], $data['email'],  $passwordHash, $data['telefono'] ?? '', $data['ci_nit'] ?? '']);
             $idUsuario = $this->db->lastInsertId();
 
-            $idDireccionPrincipal = null;
-
-            // 2. Insertar direcciones
-            foreach ($data['direcciones'] as $index => $dir) {
-                $stmtDireccion = $this->db->prepare("
-                INSERT INTO direccion (id_usuario, departamento, provincia, ciudad, zona, calle, numero, referencias)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-                $stmtDireccion->execute([
-                    $idUsuario,
-                    $dir['departamento'] ?? '',
-                    $dir['provincia'] ?? '',
-                    $dir['ciudad'] ?? '',
-                    $dir['zona'] ?? '',
-                    $dir['calle'] ?? '',
-                    $dir['numero'] ?? '',
-                    $dir['referencias'] ?? ''
-                ]);
-
-                $idInsertada = $this->db->lastInsertId();
-
-                // Si es la primera dirección o está marcada como principal
-                if ($index === 0 || !empty($dir['principal'])) {
-                    $idDireccionPrincipal = $idInsertada;
-                }
-            }
-
-            // 3. Actualizar dirección principal en usuario
-            if ($idDireccionPrincipal) {
-                $stmtUpdate = $this->db->prepare("
-                UPDATE usuario SET id_direccion_principal = ? WHERE id_usuario = ?
-            ");
-                $stmtUpdate->execute([$idDireccionPrincipal, $idUsuario]);
-            }
-
             $this->db->commit();
             return ResponseHelper::success(
                 'Usuario registrado exitosamente',
@@ -102,29 +67,24 @@ class UsuarioModel
     }
 
     /**
-     * Recupera un usuario y todas sus direcciones asociadas.
+     * Recupera un usuario.
      * @param int $id_usuario El ID del usuario a buscar.
      * @return array Resultado de la operación.
      */
     public function recuperar($id_usuario)
     {
         try {
-            // Consulta SQL que une la tabla de usuarios con la de direcciones.
-            // Usamos LEFT JOIN para obtener el usuario incluso si no tiene direcciones.
             $sql = "SELECT 
-                    u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, u.ci_nit, u.id_direccion_principal, u.estado,
-                    d.id_direccion, d.departamento, d.provincia, d.ciudad, d.zona, d.calle, d.numero, d.referencias
+                    id_usuario, nombres, apellidos, email, telefono, ci_nit, estado
                 FROM 
-                    usuario u
-                LEFT JOIN 
-                    direccion d ON u.id_usuario = d.id_usuario
+                    usuario 
                 WHERE 
-                    u.id_usuario = ?";
+                    id_usuario = ?";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$id_usuario]);
 
-            // Obtenemos todos los resultados. Si un usuario tiene 3 direcciones, obtendremos 3 filas.
+            // Obtenemos todos los resultados.
             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Si no se encontró ningún registro para ese ID, retornamos un error.
@@ -133,7 +93,7 @@ class UsuarioModel
             }
 
             // Estructuramos la respuesta para que no se repitan los datos del usuario.
-            // El usuario será el objeto principal y sus direcciones estarán en un array anidado.
+            // El usuario será el objeto principal
             $usuario = [
                 'id_usuario' => $resultados[0]['id_usuario'],
                 'nombres' => $resultados[0]['nombres'],
@@ -141,27 +101,8 @@ class UsuarioModel
                 'email' => $resultados[0]['email'],
                 'telefono' => $resultados[0]['telefono'],
                 'ci_nit' => $resultados[0]['ci_nit'],
-                'id_direccion_principal' => $resultados[0]['id_direccion_principal'],
-                'estado' => $resultados[0]['estado'],
-                'direcciones' => [] // Inicializamos el array de direcciones.
+                'estado' => $resultados[0]['estado']
             ];
-
-            // Recorremos los resultados para agrupar las direcciones.
-            foreach ($resultados as $fila) {
-                // Si la fila actual tiene datos de una dirección (id_direccion no es null).
-                if ($fila['id_direccion']) {
-                    $usuario['direcciones'][] = [
-                        'id_direccion' => $fila['id_direccion'],
-                        'departamento' => $fila['departamento'],
-                        'provincia' => $fila['provincia'],
-                        'ciudad' => $fila['ciudad'],
-                        'zona' => $fila['zona'],
-                        'calle' => $fila['calle'],
-                        'numero' => $fila['numero'],
-                        'referencias' => $fila['referencias']
-                    ];
-                }
-            }
 
             return ResponseHelper::success('Usuario encontrado', $usuario);
         } catch (PDOException $e) {
@@ -170,12 +111,10 @@ class UsuarioModel
         }
     }
     /**
-     * Actualiza la información de un usuario y sus direcciones.
+     * Actualiza la información de un usuario.
      * @param int $id_usuario El ID del usuario a actualizar.
-     * @param array $datos Los nuevos datos del usuario, incluyendo un array de 'direcciones'.
      * @return array Resultado de la operación.
      */
-
     public function modificar($idUsuario, $datos)
     {
         $this->db->beginTransaction();
@@ -202,49 +141,6 @@ class UsuarioModel
                 $idUsuario
             ]);
 
-            // 2. Eliminar referencia a dirección principal para evitar error de integridad
-            $stmtNull = $this->db->prepare("UPDATE usuario SET id_direccion_principal = NULL WHERE id_usuario = ?");
-            $stmtNull->execute([$idUsuario]);
-
-            // 3. Borrar direcciones antiguas
-            $stmtDelete = $this->db->prepare("DELETE FROM direccion WHERE id_usuario = ?");
-            $stmtDelete->execute([$idUsuario]);
-
-            $idDireccionPrincipal = null;
-
-            // 4. Insertar nuevas direcciones
-            foreach ($datos['direcciones'] as $index => $dir) {
-                $stmtDireccion = $this->db->prepare("
-                INSERT INTO direccion (id_usuario, departamento, provincia, ciudad, zona, calle, numero, referencias)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-                $stmtDireccion->execute([
-                    $idUsuario,
-                    $dir['departamento'] ?? '',
-                    $dir['provincia'] ?? '',
-                    $dir['ciudad'] ?? '',
-                    $dir['zona'] ?? '',
-                    $dir['calle'] ?? '',
-                    $dir['numero'] ?? '',
-                    $dir['referencias'] ?? ''
-                ]);
-
-                $idInsertada = $this->db->lastInsertId();
-
-                // Detectar si esta es la dirección principal
-                if (!empty($dir['principal'])) {
-                    $idDireccionPrincipal = $idInsertada;
-                }
-            }
-
-            // 5. Actualizar dirección principal si se definió
-            if ($idDireccionPrincipal) {
-                $stmtUpdate = $this->db->prepare("
-                UPDATE usuario SET id_direccion_principal = ? WHERE id_usuario = ?
-            ");
-                $stmtUpdate->execute([$idDireccionPrincipal, $idUsuario]);
-            }
-
             $this->db->commit();
             return ResponseHelper::success('Usuario actualizado exitosamente');
         } catch (Exception $e) {
@@ -253,58 +149,52 @@ class UsuarioModel
         }
     }
 
-
     /**
-     * Elimina un usuario, ya sea de forma lógica o física.
-     * @param int $id_usuario El ID del usuario a eliminar.
-     * @param string $tipo El tipo de eliminación: 'logico' o 'fisico'. Por defecto es 'logico'.
-     * @param string $rol_usuario El rol del usuario que realiza la acción ('usuario', 'admin', 'vendedor').
+     * Desactiva (bloquea) un usuario cambiando su estado a 'inactivo'.
+     * @param int $id_usuario ID del usuario a desactivar.
+     * @param string $rol_usuario Rol del usuario que realiza la acción.
      * @return array Resultado de la operación.
      */
-    public function borrar($id_usuario, $tipo = 'logico', $rol_usuario = 'usuario')
+    public function desactivarUsuario($id_usuario, $rol_usuario = 'usuario')
     {
-        if ($tipo === 'fisico') {
-            // --- ELIMINACIÓN FÍSICA ---
-            // Primero, verificamos si el usuario tiene permisos para esta acción.
-            if ($rol_usuario !== 'admin') {
-                return ResponseHelper::error('Acceso denegado. Se requieren privilegios de administrador.', 403);
+        if ($rol_usuario !== 'admin') {
+            return ResponseHelper::error('Acceso denegado. Solo los administradores pueden desactivar usuarios.', 403);
+        }
+
+        try {
+            $sql = "UPDATE usuario SET estado = 'inactivo' WHERE id_usuario = ?";
+            $stmt = $this->db->prepare($sql);
+
+            if ($stmt->execute([$id_usuario])) {
+                return ResponseHelper::success('Usuario desactivado exitosamente.');
             }
 
-            // Usamos una transacción porque vamos a borrar de dos tablas.
-            $this->db->beginTransaction();
-            try {
-                // Es importante borrar primero los registros de la tabla hija ('direccion')
-                // para evitar errores de restricción de clave foránea.
-                $stmtDireccion = $this->db->prepare("DELETE FROM direccion WHERE id_usuario = ?");
-                $stmtDireccion->execute([$id_usuario]);
+            return ResponseHelper::error('No se pudo desactivar el usuario.', 500);
+        } catch (PDOException $e) {
+            return ResponseHelper::databaseError($e->getMessage());
+        }
+    }
 
-                // Ahora borramos el registro de la tabla principal ('usuario').
-                $stmtUsuario = $this->db->prepare("DELETE FROM usuario WHERE id_usuario = ?");
-                $stmtUsuario->execute([$id_usuario]);
+    /**
+     * Elimina físicamente la cuenta del usuario (autoborrado).
+     * @param int $id_usuario ID del usuario a eliminar.
+     * @param int $id_solicitante ID del usuario que realiza la acción.
+     * @param string $rol_usuario Rol del solicitante.
+     * @return array Resultado de la operación.
+     */
+    public function eliminarCuenta($id_usuario)
+    {
 
-                // Confirmamos la eliminación.
-                $this->db->commit();
-                return ResponseHelper::success('Usuario eliminado permanentemente.');
-            } catch (PDOException $e) {
-                // Si algo falla, revertimos la eliminación.
-                $this->db->rollBack();
-                return ResponseHelper::databaseError($e->getMessage());
-            }
-        } else {
-            // --- ELIMINACIÓN LÓGICA (POR DEFECTO) ---
-            try {
-                // Simplemente actualizamos el estado del usuario a 'inactivo'.
-                $sql = "UPDATE usuario SET estado = 'inactivo' WHERE id_usuario = ?";
-                $stmt = $this->db->prepare($sql);
+        $this->db->beginTransaction();
+        try {
+            $stmtUsuario = $this->db->prepare("DELETE FROM usuario WHERE id_usuario = ?");
+            $stmtUsuario->execute([$id_usuario]);
 
-                if ($stmt->execute([$id_usuario])) {
-                    return ResponseHelper::success('Usuario desactivado exitosamente.');
-                }
-
-                return ResponseHelper::error('No se pudo desactivar el usuario.', 500);
-            } catch (PDOException $e) {
-                return ResponseHelper::databaseError($e->getMessage());
-            }
+            $this->db->commit();
+            return ResponseHelper::success('Tu cuenta ha sido eliminada permanentemente.');
+        } catch (PDOException $e) {
+            $this->db->rollBack();
+            return ResponseHelper::databaseError($e->getMessage());
         }
     }
 

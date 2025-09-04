@@ -17,24 +17,6 @@ class UsuarioController
     {
         $this->model = new UsuarioModel($pdo);
     }
-
-    /**
-     * Método auxiliar para extraer el payload del JWT.
-     * Lo llamamos DESPUÉS de que el middleware haya validado el token.
-     */
-    private function obtenerPayloadDeJWT()
-    {
-        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-        $jwt = str_replace('Bearer ', '', $authHeader);
-
-        try {
-            $key = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
-            error_log("pasando leer.");
-            return JWT::decode($jwt, new Key($key, 'HS256'));
-        } catch (Exception $e) {
-            return null;
-        }
-    }
     /**
      * Registra un nuevo usuario
      * @param array $data Datos del usuario a registrar
@@ -119,8 +101,7 @@ class UsuarioController
             'apellidos' => trim($data['apellidos'] ?? ''),
             'email' => trim($data['email'] ?? ''),
             'telefono' => trim($data['telefono'] ?? null),
-            'ci_nit' => trim($data['ci_nit'] ?? null),
-            'direcciones' => $data['direcciones'] ?? []
+            'ci_nit' => trim($data['ci_nit'] ?? null)
         ]);
     }
 
@@ -133,9 +114,6 @@ class UsuarioController
     public function eliminar($payload)
     {
         $id_usuario = $payload->sub;
-        $rol_usuario = $payload->data->rol ?? 'usuario';
-        $tipo_eliminacion = $data['tipo'] ?? 'logico';
-
-        return $this->model->borrar($id_usuario, $tipo_eliminacion, $rol_usuario);
+        return $this->model->eliminarCuenta($id_usuario);
     }
 }
