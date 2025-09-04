@@ -84,9 +84,18 @@
 
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            // Variable para almacenar la URL base de la API
+            let apiUrl;
+
+            // Obtener el hostname de la URL actual.
+            // Esto funcionará tanto para localhost como para cualquier IP de red local (192.168.x.x, 10.x.x.x, etc.)
+            const host = window.location.hostname;
+
+            // Construir la URL base de la API usando el hostname actual
+            apiUrl = `http://${host}/emarket_bolivia/backend/public`;
 
             try {
-                const response = await fetch('http://localhost/emarket_bolivia/backend/public/login', {
+                const response = await fetch(`${apiUrl}/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -132,7 +141,7 @@
         // Función para probar la conexión con el servidor (sin cambios, está bien)
         async function testConnection() {
             try {
-                const response = await fetch('http://localhost/emarket_bolivia/backend/public/status');
+                const response = await fetch(`${apiUrl}/status`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const result = await response.json();
                 console.log('Test de conexión exitoso:', result);

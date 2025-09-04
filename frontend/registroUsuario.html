@@ -142,6 +142,7 @@
             const resultDiv = document.getElementById('result');
             const debugDiv = document.getElementById('debug');
             const submitBtn = document.getElementById('submitBtn');
+            const ip = "192.168.26.3";
 
             // Mostrar estado de carga
             submitBtn.disabled = true;
@@ -164,12 +165,22 @@
             try {
                 console.log('Enviando datos:', data);
 
-                const response = await fetch('http://localhost/emarket_bolivia/backend/public/usuarios/registro', {
+                // Variable para almacenar la URL base de la API
+                let apiUrl;
+
+                // Obtener el hostname de la URL actual.
+                // Esto funcionará tanto para localhost como para cualquier IP de red local (192.168.x.x, 10.x.x.x, etc.)
+                const host = window.location.hostname;
+
+                // Construir la URL base de la API usando el hostname actual
+                apiUrl = `http://${host}/emarket_bolivia/backend/public`;
+
+                // Dentro de tu función de registro
+                const response = await fetch(`${apiUrl}/usuarios/registro`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        // Headers adicionales para CORS si es necesario
                         'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify(data)
@@ -234,10 +245,10 @@
             }
         });
 
-        // Función para probar la conexión con el servidor
+        /* Función para probar la conexión con el servidor
         async function testConnection() {
             try {
-                const response = await fetch('http://localhost/emarket_bolivia/backend/public/status');
+                const response = await fetch('http://$ip/market_bolivia/backend/public/status');
                 const result = await response.json();
                 console.log('Test de conexión exitoso:', result);
             } catch (error) {
@@ -246,7 +257,7 @@
         }
 
         // Ejecutar test de conexión al cargar la página
-        window.addEventListener('load', testConnection);
+        window.addEventListener('load', testConnection);*/
     </script>
 </body>
 

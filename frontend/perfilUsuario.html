@@ -82,13 +82,22 @@
     </div>
 
     <script>
-        const endpoint = 'http://localhost/emarket_bolivia/backend/public/usuarios/perfil';
+        let apiUrl;
+
+        // Obtener el hostname de la URL actual.
+        // Esto funcionará tanto para localhost como para cualquier IP de red local (192.168.x.x, 10.x.x.x, etc.)
+        const host = window.location.hostname;
+
+        // Construir la URL base de la API usando el hostname actual
+        apiUrl = `http://${host}/emarket_bolivia`;
+
+        const endpoint = `${apiUrl}/backend/public/usuarios/perfil`;
         const token = localStorage.getItem('token');
 
         async function cargarPerfil() {
 
             if (!token) {
-                window.location.href = 'http://localhost/emarket_bolivia/frontend/login.html';
+                window.location.href = `${apiUrl}/frontend/login.html`;
                 return;
             }
             try {
@@ -96,17 +105,17 @@
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token} `
                     }
                 });
                 const data = await response.json();
                 console.log("=== DATOS RECIBIDOS ===");
                 console.log(JSON.stringify(data, null, 2));
                 console.log("===================================");
-                if (!response.ok) throw new Error(data.mensaje || `Error ${response.status}`);
+                if (!response.ok) throw new Error(data.mensaje || `Error ${response.status} `);
                 mostrarDatosEnUI(data.data);
             } catch (error) {
-                document.getElementById('error').textContent = `Error al cargar perfil: ${error.message}`;
+                document.getElementById('error').textContent = `Error al cargar perfil: ${error.message} `;
             }
         }
 
@@ -154,19 +163,19 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token} `
                     },
                     body: JSON.stringify(datosActualizados)
                 });
                 const result = await response.json();
-                if (!response.ok) throw new Error(result.mensaje || `Error ${response.status}`);
+                if (!response.ok) throw new Error(result.mensaje || `Error ${response.status} `);
                 alert('Perfil actualizado correctamente');
                 document.querySelectorAll('#perfilForm input, #perfilForm textarea').forEach(el => el.disabled = true);
                 document.getElementById('btnEditar').style.display = 'inline-block';
                 document.getElementById('btnGuardar').style.display = 'none';
                 cargarPerfil();
             } catch (error) {
-                document.getElementById('error').textContent = `Error al actualizar: ${error.message}`;
+                document.getElementById('error').textContent = `Error al actualizar: ${error.message} `;
             }
         });
 
@@ -179,15 +188,15 @@
             try {
                 const response = await fetch(endpoint, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${token} ` }
                 });
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => null);
-                    throw new Error(errorData?.mensaje || `Error ${response.status}`);
+                    throw new Error(errorData?.mensaje || `Error ${response.status} `);
                 }
                 alert('Perfil eliminado correctamente.');
                 localStorage.removeItem('token');
-                window.location.href = '/emarket_bolivia/frontend/login.html';
+                window.location.href = `${apiUrl}/frontend/login.html`;
             } catch (error) {
                 document.getElementById('error').textContent = `Error al eliminar: ${error.message}`;
             }
