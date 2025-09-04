@@ -1,0 +1,31 @@
+# Dependencias de Composer
+backend/vendor/
+vendor/
+composer.lock
+
+# Variables de entorno
+.env
+*.env
+backend/.env
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.bak
+.tmp/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Cache
+.cache/

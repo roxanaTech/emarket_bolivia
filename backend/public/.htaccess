@@ -1,0 +1,41 @@
+# Habilitar el motor de reescritura
+RewriteEngine On
+
+# Manejar solicitudes CORS preflight (OPTIONS) ANTES de otras reglas
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ index.php [L]
+
+# Redirigir todo el tráfico al index.php si el archivo/directorio no existe
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Configuraciones de seguridad
+<Files ~ "^\.">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Prevenir acceso a archivos de configuración
+<FilesMatch "\.(env|json|lock)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Permitir acceso a archivos PHP
+<FilesMatch "\.php$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Configurar tipos MIME
+<IfModule mod_mime.c>
+    AddType application/json .json
+    AddType application/x-httpd-php .php
+</IfModule>
+
+# Asegurar que index.php sea accesible
+<Files "index.php">
+    Order allow,deny
+    Allow from all
+</Files>

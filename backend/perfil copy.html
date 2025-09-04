@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Perfil de Usuario</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #ccc;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-update {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Perfil de Usuario</h2>
+        <div id="profile">
+            <p><strong>Nombre:</strong> <span id="nombre">Cargando...</span></p>
+            <p><strong>Apellidos:</strong> <span id="apellidos">Cargando...</span></p>
+            <p><strong>Email:</strong> <span id="email">Cargando...</span></p>
+            <p><strong>Telefono:</strong> <span id="telefono">Cargando...</span></p>
+            <p><strong>CI ó NIT:</strong> <span id="ci_nit">Cargando...</span></p>
+            <p><strong>Direccion:</strong> <span id="direccion">Cargando...</span></p>
+        </div>
+        <button class="btn btn-update" onclick="actualizarPerfil()">Actualizar</button>
+        <button class="btn btn-delete" onclick="eliminarPerfil()">Eliminar</button>
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        const endpoint = 'http://localhost/backend-emarket/public/usuarios/perfil';
+
+        /**
+         * Carga los datos del perfil del usuario desde el servidor y los muestra en la página.
+         */
+        async function cargarPerfil() {
+            const token = localStorage.getItem('token');
+            console.log('Token que envío:', token);
+            if (!token) {
+                console.error('No hay token. Redirigiendo al login...');
+                window.location.href = 'http://localhost/frontend/login.html';
+                return;
+            }
+
+            try {
+                // 1. Usar la variable 'endpoint' completa y añadir manejo de errores.
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // El token es necesario para autenticar
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Si el servidor responde con un error (ej. 401 Token inválido), lo lanzamos
+                    throw new Error(data.mensaje || `Error ${response.status}`);
+                }
+
+                console.log('Perfil cargado:', data);
+                mostrarDatosEnUI(data.data); // Llama a una función para actualizar la vista
+
+            } catch (error) {
+                console.error('Error al cargar el perfil:', error);
+                document.getElementById('error').textContent = `Error al cargar perfil: ${error.message}`;
+            }
+        }
+
+        /**
+         * Actualiza los datos del perfil del usuario.
+         * NOTA: Los datos 'nombre' y 'email' están fijos, idealmente vendrían de un formulario.
+         */
+        async function actualizarPerfil() {
+            const token = localStorage.getItem('token');
+            console.log('Token que envío:', token);
+            if (!token) {
+                alert('No estás autenticado.');
+                return;
+            }
+
+            // Datos de ejemplo a actualizar. Deberían venir de inputs del formulario.
+            const datosActualizados = {
+                nombres: 'Maria',
+                apellidos: '',
+                email: 'nuevo@gmail.com',
+                telefono: '',
+                ci_nit: '452112',
+                direccion: ''
+            };
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // 2. Faltaba el header de autorización
+                    },
+                    body: JSON.stringify(datosActualizados)
+                });
+
+                const result = await response.json(); // Leemos la respuesta (sea de éxito o error)
+
+                // 3. Lógica de error/éxito 
+                if (!response.ok) {
+                    // Intentar obtener el cuerpo de la respuesta incluso en errores
+                    let errorText = '';
+                    try {
+                        const errorResult = await response.json();
+                        errorText = errorResult.mensaje || errorResult.message || errorResult.error || `Error ${response.status}`;
+                    } catch {
+                        errorText = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(result.mensaje || `Error del servidor ${response.status}`);
+                }
+
+                alert('Perfil actualizado correctamente');
+                cargarPerfil(); // Recargamos los datos para ver los cambios
+
+            } catch (error) {
+                console.error('Error al actualizar perfil:', error);
+                document.getElementById('error').textContent = `Error al actualizar: ${error.message}`;
+            }
+        }
+
+        /**
+         * Elimina el perfil del usuario, cierra su sesión y lo redirige.
+         */
+        async function eliminarPerfil() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('No estás autenticado.');
+                return;
+            }
+
+            // Pedimos confirmación antes de una acción destructiva
+            if (!confirm('¿Estás seguro de que quieres eliminar tu perfil? Esta acción no se puede deshacer.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}` // 4. Faltaba el header de autorización
+                    }
+                });
+
+                if (!response.ok) {
+                    // Intenta leer un mensaje de error del cuerpo de la respuesta
+                    const errorData = await response.json().catch(() => null);
+                    throw new Error(errorData?.mensaje || `Error ${response.status}`);
+                }
+
+                alert('Perfil eliminado correctamente. Serás redirigido.');
+
+                // 5. Limpiar sesión y redirigir
+                localStorage.removeItem('token');
+                // window.location.href = '/login.html'; // Redirigir a la página de login
+
+            } catch (error) {
+                console.error('Error al eliminar perfil:', error);
+                document.getElementById('error').textContent = `Error al eliminar: ${error.message}`;
+            }
+        }
+
+        // ---- FUNCIONES AUXILIARES ----
+
+        /**
+         * Actualiza el DOM con los datos del usuario.
+         * @param {object} usuario - El objeto con los datos del perfil.
+         */
+        function mostrarDatosEnUI(usuario) {
+            if (!usuario) return;
+            document.getElementById('nombre').textContent = usuario.nombres || 'No disponible';
+            document.getElementById('apellidos').textContent = usuario.apellidos || 'No disponible';
+            document.getElementById('email').textContent = usuario.email || 'No disponible';
+            document.getElementById('telefono').textContent = usuario.telefono || 'No disponible';
+            document.getElementById('ci_nit').textContent = usuario.ci_nit || 'No disponible';
+            document.getElementById('direccion').textContent = usuario.direccion || 'No disponible';
+            document.getElementById('error').textContent = '';
+        }
+
+        /**
+         * Función para probar la conexión con el servidor (sin cambios, está bien).
+         */
+        async function testConnection() {
+            try {
+                const response = await fetch('http://localhost/backend-emarket/public/status');
+                const result = await response.json();
+                console.log('Test de conexión exitoso:', result);
+            } catch (error) {
+                console.error('Test de conexión falló:', error);
+            }
+        }
+
+        // ---- EVENT LISTENERS ----
+        window.addEventListener('load', testConnection);
+        document.addEventListener('DOMContentLoaded', cargarPerfil);
+    </script>
+</body>
+
+</html>
+/*
+public function crear($nombres, $apellidos, $email, $password, $telefono, $ci_nit)
+{
+try {
+// Verificar si el email ya existe
+if ($this->emailExiste($email)) {
+return ResponseHelper::duplicateError('email');
+}
+if (!empty($ci_nit) && $this->ciNitExiste($ci_nit)) {
+return ResponseHelper::duplicateError('ci_nit');
+}
+
+
+$sql = "INSERT INTO usuario (nombres,apellidos, email, password, telefono, ci_nit) VALUES (?, ?, ?,?, ?, ?)";
+$stmt = $this->db->prepare($sql);
+
+$passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+if ($stmt->execute([$nombres, $apellidos, $email, $passwordHash, $telefono ?: null, !empty($ci_nit) ? $ci_nit : null]))
+{
+return ResponseHelper::success(
+'Usuario registrado exitosamente',
+['user_id' => $this->db->lastInsertId()]
+);
+}
+
+return ResponseHelper::error('Error al registrar usuario', 500);
+} catch (PDOException $e) {
+if ($e->getCode() == 23000) {
+return ResponseHelper::duplicateError('email o ci_nit');
+}
+return ResponseHelper::databaseError($e->getMessage());
+}
+}
+
+
+
+public function modificar($id_usuario, $datos)
+{
+// Iniciamos una transacción para garantizar la integridad de los datos.
+// O todo se actualiza correctamente, o nada cambia.
+$this->db->beginTransaction();
+
+try {
+// Verificamos si el nuevo email o ci_nit ya existen en OTRO usuario.
+// Pasamos el id del usuario actual para excluirlo de la búsqueda.
+if (isset($datos['email']) && $this->emailExiste($datos['email'], $id_usuario)) {
+return ResponseHelper::duplicateError('email');
+}
+
+if (isset($datos['ci_nit']) && !empty($datos['ci_nit']) && $this->ciNitExiste($datos['ci_nit'], $id_usuario)) {
+return ResponseHelper::duplicateError('ci_nit');
+}
+
+// 1. Actualizar la tabla 'usuario'
+$sqlUsuario = "UPDATE usuario SET nombres = ?, apellidos = ?, email = ?, telefono = ?, ci_nit = ? WHERE id_usuario = ?";
+$stmtUsuario = $this->db->prepare($sqlUsuario);
+// Usamos el operador ?? para asignar un valor por defecto si la clave no existe en $datos.
+$stmtUsuario->execute([
+$datos['nombres'] ?? '',
+$datos['apellidos'] ?? '',
+$datos['email'] ?? '',
+$datos['telefono'] ?? null,
+$datos['ci_nit'] ?? null,
+$id_usuario
+]);
+
+if (isset($datos['direcciones']) && is_array($datos['direcciones'])) {
+$sqlDireccion = "INSERT INTO direccion (id_usuario, departamento, provincia, ciudad, zona, calle, numero, referencias)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+$stmtDireccion = $this->db->prepare($sqlDireccion);
+foreach ($datos['direcciones'] as $dir) {
+if (!is_array($dir)) continue; // Evita recorrer strings u objetos planos
+
+$stmtDireccion->execute([
+$id_usuario,
+trim($dir['departamento'] ?? ''),
+trim($dir['provincia'] ?? ''),
+trim($dir['ciudad'] ?? ''),
+trim($dir['zona'] ?? ''),
+trim($dir['calle'] ?? ''),
+trim($dir['numero'] ?? ''),
+trim($dir['referencias'] ?? '')
+]);
+}
+}
+
+
+/* 2. Gestionar las direcciones (Borrar e insertar de nuevo)
+// Verificamos si se proporcionó un array de direcciones.
+if (isset($datos['direcciones']) && is_array($datos['direcciones'])) {
+// Primero, borramos todas las direcciones antiguas de este usuario.
+$stmtBorrarDir = $this->db->prepare("DELETE FROM direccion WHERE id_usuario = ?");
+$stmtBorrarDir->execute([$id_usuario]);
+
+// Ahora, insertamos las nuevas direcciones una por una.
+$sqlDireccion = "INSERT INTO direccion (id_usuario, departamento, provincia, ciudad, zona, calle, numero, referencias)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+$stmtDireccion = $this->db->prepare($sqlDireccion);
+
+foreach ($datos['direcciones'] as $dir) {
+$stmtDireccion->execute([
+$id_usuario,
+$dir['departamento'] ?? '',
+$dir['provincia'] ?? '',
+$dir['ciudad'] ?? '',
+$dir['zona'] ?? '',
+$dir['calle'] ?? '',
+$dir['numero'] ?? '',
+$dir['referencias'] ?? ''
+]);
+}
+}*/
+
+
+$this->db->commit();
+
+return ResponseHelper::success('Usuario actualizado exitosamente');
+} catch (PDOException $e) {
+// Si algo falla, revertimos todos los cambios hechos durante la transacción.
+$this->db->rollBack();
+return ResponseHelper::databaseError($e->getMessage());
+}
+}
+*/
