@@ -164,7 +164,7 @@
             try {
                 console.log('Enviando datos:', data);
 
-                const response = await fetch('http://localhost/backend-emarket/public/usuarios/registro', {
+                const response = await fetch('http://localhost/emarket/backend/public/usuarios/registro', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -237,7 +237,7 @@
         // Función para probar la conexión con el servidor
         async function testConnection() {
             try {
-                const response = await fetch('http://localhost/backend-emarket/public/status');
+                const response = await fetch('http://localhost/emarket/backend/public/status');
                 const result = await response.json();
                 console.log('Test de conexión exitoso:', result);
             } catch (error) {

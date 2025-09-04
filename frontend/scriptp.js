@@ -6,10 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const responseMessage = document.getElementById('response-message');
     let direccionCount = 1;
 
-    const apiUrl = 'http://localhost/backend-emarket/public/usuarios/perfil';
+    const apiUrl = 'http://localhost/emarket/backend/public/usuarios/perfil';
     const token = localStorage.getItem('token');
     if (!token) {
-        window.location.href = 'http://localhost/frontend/login.html';
+        window.location.href = 'http://localhost/emarket/frontend/login.html';
         return;
     }
 
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             alert('Perfil eliminado correctamente.');
             localStorage.removeItem('token');
-            window.location.href = '/frontend/login.html';
+            window.location.href = '/emarket/frontend/login.html';
         } catch (error) {
             document.getElementById('error').textContent = `Error al eliminar: ${error.message}`;
         }

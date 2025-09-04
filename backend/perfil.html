@@ -104,12 +104,13 @@
     </div>
 
     <script>
-        const endpoint = 'http://localhost/backend-emarket/public/usuarios/perfil';
+        const endpoint = 'http://localhost/emarket/backend/public/usuarios/perfil';
+        const token = localStorage.getItem('token');
 
         async function cargarPerfil() {
-            const token = localStorage.getItem('token');
+
             if (!token) {
-                window.location.href = 'http://localhost/frontend/login.html';
+                window.location.href = 'http://localhost/emarket/frontend/login.html';
                 return;
             }
             try {
@@ -159,7 +160,7 @@
 
         document.getElementById('perfilForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const token = localStorage.getItem('token');
+
             if (!token) {
                 alert('No estás autenticado.');
                 return;
@@ -215,10 +216,9 @@
         });
 
         async function eliminarPerfil() {
-            const token = localStorage.getIt                n');
             if (!token) {
-                        alert('No estás autenticado.');
-                               
+                alert('No estás autenticado.');
+
             }
             if (!confirm('¿Seguro que quieres eliminar tu perfil?')) return;
             try {
@@ -232,7 +232,7 @@
                 }
                 alert('Perfil eliminado correctamente.');
                 localStorage.removeItem('token');
-                window.location.href = '/login.html';
+                window.location.href = '/emarket/frontend/login.html';
             } catch (error) {
                 document.getElementById('error').textContent = `Error al eliminar: ${error.message}`;
             }
