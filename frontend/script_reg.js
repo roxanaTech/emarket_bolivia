@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return dir;
         });
 
-        const apiUrl = 'http://localhost/emarket/backend/public/usuarios/registro';
+        const apiUrl = 'http://localhost/emarket_bolivia/backend/public/usuarios/registro';
 
         try {
             const response = await fetch(apiUrl, {
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         var confirmacion = confirm("¿Está seguro de que desea cancelar la operación?");
 
         if (confirmacion) {
-            window.location.href = '/emarket/backend/public/login.html';
+            window.location.href = '/emarket_bolivia/backend/public/login.html';
         }
     };
 
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Función para probar la conexión con el servidor
     async function testConnection() {
         try {
-            const response = await fetch('http://localhost/emarket/backend/public/status');
+            const response = await fetch('http://localhost/emarket_bolivia/backend/public/status');
             const result = await response.json();
             console.log('Test de conexión exitoso:', result);
         } catch (error) {

@@ -86,7 +86,7 @@
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('http://localhost/emarket/backend/public/login', {
+                const response = await fetch('http://localhost/emarket_bolivia/backend/public/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -106,7 +106,7 @@
                         console.log('Login exitoso. Token guardado:', data.data.token);
                         // Redirigimos al perfil del usuario
                         alert("Login exitoso");
-                        window.location.href = '/emarket/frontend/perfilUsuario.html';
+                        window.location.href = '/emarket_bolivia/frontend/perfilUsuario.html';
                     } else {
                         // Si la respuesta es OK pero no hay token, es un error inesperado del backend
                         alert('Respuesta inesperada del servidor.');
@@ -126,13 +126,13 @@
             }
         });
         document.getElementById('registro').addEventListener('click', function () {
-            window.location.href = '/emarket/frontend/registroUsuario.html';
+            window.location.href = '/emarket_bolivia/frontend/registroUsuario.html';
         });
 
         // Función para probar la conexión con el servidor (sin cambios, está bien)
         async function testConnection() {
             try {
-                const response = await fetch('http://localhost/emarket/backend/public/status');
+                const response = await fetch('http://localhost/emarket_bolivia/backend/public/status');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const result = await response.json();
                 console.log('Test de conexión exitoso:', result);

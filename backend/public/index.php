@@ -28,7 +28,7 @@ header('Content-Type: application/json; charset=utf-8');
 $router = new Router();
 
 // Define el directorio base para el enrutamiento
-$router->setBasePath('/emarket/backend/public');
+$router->setBasePath('/emarket_bolivia/backend/public');
 
 // Incluye el archivo que define todas las rutas
 require_once __DIR__ . '/../src/routes/web.php';

@@ -164,7 +164,7 @@
             try {
                 console.log('Enviando datos:', data);
 
-                const response = await fetch('http://localhost/emarket/backend/public/usuarios/registro', {
+                const response = await fetch('http://localhost/emarket_bolivia/backend/public/usuarios/registro', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -201,7 +201,7 @@
                     resultDiv.className = 'success';
                     resultDiv.innerHTML = '<strong>¡Éxito!</strong><br>' + (result.mensaje || result.message || 'Usuario Ingresado');
                     alert("¡Registro exitoso! Por favor, inicia sesión ahora.");
-                    window.location.href = '/emarket/frontend/login.html';
+                    window.location.href = '/emarket_bolivia/frontend/login.html';
 
                 } else {
                     resultDiv.className = 'error';
@@ -237,7 +237,7 @@
         // Función para probar la conexión con el servidor
         async function testConnection() {
             try {
-                const response = await fetch('http://localhost/emarket/backend/public/status');
+                const response = await fetch('http://localhost/emarket_bolivia/backend/public/status');
                 const result = await response.json();
                 console.log('Test de conexión exitoso:', result);
             } catch (error) {
