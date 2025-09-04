@@ -72,28 +72,6 @@
             <label>CI ó NIT</label>
             <input type="text" id="ci_nit" name="ci_nit" disabled>
 
-            <h3>Dirección</h3>
-            <label>Departamento</label>
-            <input type="text" id="departamento" name="departamento" disabled>
-
-            <label>Provincia</label>
-            <input type="text" id="provincia" name="provincia" disabled>
-
-            <label>Ciudad</label>
-            <input type="text" id="ciudad" name="ciudad" disabled>
-
-            <label>Zona</label>
-            <input type="text" id="zona" name="zona" disabled>
-
-            <label>Calle</label>
-            <input type="text" id="calle" name="calle" disabled>
-
-            <label>Número</label>
-            <input type="text" id="numero" name="numero" disabled>
-
-            <label>Referencias</label>
-            <textarea id="referencias" name="referencias" disabled></textarea>
-
             <div style="margin-top:10px;">
                 <button type="button" class="btn btn-update" id="btnEditar">Editar</button>
                 <button type="submit" class="btn btn-update" id="btnGuardar" style="display:none;">Guardar</button>
@@ -138,18 +116,6 @@
             document.getElementById('email').value = usuario.email || '';
             document.getElementById('telefono').value = usuario.telefono || '';
             document.getElementById('ci_nit').value = usuario.ci_nit || '';
-
-            // Si hay direcciones, tomamos la primera
-            if (usuario.direcciones && usuario.direcciones.length > 0) {
-                const dir = usuario.direcciones[0];
-                document.getElementById('departamento').value = dir.departamento || '';
-                document.getElementById('provincia').value = dir.provincia || '';
-                document.getElementById('ciudad').value = dir.ciudad || '';
-                document.getElementById('zona').value = dir.zona || '';
-                document.getElementById('calle').value = dir.calle || '';
-                document.getElementById('numero').value = dir.numero || '';
-                document.getElementById('referencias').value = dir.referencias || '';
-            }
         }
 
         document.getElementById('btnEditar').addEventListener('click', () => {
@@ -171,18 +137,7 @@
                 apellidos: document.getElementById('apellidos').value.trim(),
                 email: document.getElementById('email').value.trim(),
                 telefono: document.getElementById('telefono').value.trim(),
-                ci_nit: document.getElementById('ci_nit').value.trim(),
-                direcciones: [
-                    {
-                        departamento: document.getElementById('departamento').value.trim(),
-                        provincia: document.getElementById('provincia').value.trim(),
-                        ciudad: document.getElementById('ciudad').value.trim(),
-                        zona: document.getElementById('zona').value.trim(),
-                        calle: document.getElementById('calle').value.trim(),
-                        numero: document.getElementById('numero').value.trim(),
-                        referencias: document.getElementById('referencias').value.trim()
-                    }
-                ]
+                ci_nit: document.getElementById('ci_nit').value.trim()
             };
             console.log("=== DATOS ACTUALIZADOS A ENVIAR ===");
             console.log(JSON.stringify(datosActualizados, null, 2));

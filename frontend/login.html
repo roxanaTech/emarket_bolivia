@@ -37,7 +37,11 @@
             cursor: pointer;
         }
 
-        #resultado {
+        #registro {
+            background: #093891;
+        }
+
+        id #resultado {
             margin-top: 20px;
             padding: 10px;
             border-radius: 4px;
@@ -69,6 +73,7 @@
         </div>
 
         <button type="submit">Ingresar</button>
+        <button type="button" id="registro">Crear cuenta</button>
     </form>
 
     <div id="resultado"></div>
@@ -101,7 +106,7 @@
                         console.log('Login exitoso. Token guardado:', data.data.token);
                         // Redirigimos al perfil del usuario
                         alert("Login exitoso");
-                        window.location.href = '/emarket/frontend/indexp.html';
+                        window.location.href = '/emarket/frontend/perfilUsuario.html';
                     } else {
                         // Si la respuesta es OK pero no hay token, es un error inesperado del backend
                         alert('Respuesta inesperada del servidor.');
@@ -120,6 +125,9 @@
                 alert('No se pudo conectar con el servidor. Inténtalo más tarde.');
             }
         });
+        document.getElementById('registro').addEventListener('click', function () {
+            window.location.href = '/emarket/frontend/registroUsuario.html';
+        });
 
         // Función para probar la conexión con el servidor (sin cambios, está bien)
         async function testConnection() {
@@ -132,6 +140,8 @@
                 console.error('Test de conexión falló:', error);
             }
         }
+
+
 
         // Ejecutar test de conexión al cargar la página
         window.addEventListener('load', testConnection);
