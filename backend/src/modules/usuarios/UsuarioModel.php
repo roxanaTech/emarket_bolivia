@@ -3,6 +3,7 @@
 namespace App\Modules\Usuarios;
 
 use App\Utils\ResponseHelper;
+use App\Utils\Validator;
 use PDOException;
 use PDO;
 use Exception;
@@ -10,43 +11,39 @@ use Exception;
 class UsuarioModel
 {
     private $db;
+    private $validator;
 
     public function __construct($pdo)
     {
         $this->db = $pdo;
+        $this->validator = new Validator($this->db);
     }
 
     /**
      * Crea un nuevo usuario en la base de datos
      * @param string $nombres
-     * @param string $apellidos
      * @param string $email
      * @param string $password
-     * @param string|null $ci_nit
      * @param string|null $telefono
      * @return array Respuesta con estado y datos
      */
-    public function crear($data)
+    public function crear($data, $idUsuario)
     {
         try {
             $this->db->beginTransaction();
             // 1. Insertar usuario
 
             // Verificar si el email ya existe
-            if ($this->emailExiste($data['email'])) {
+            if ($this->validator->datoExiste('usuario', 'email', $data['email'])) {
                 return ResponseHelper::duplicateError('email');
             }
-            if (!empty($ci_nit) && $this->ciNitExiste($data['ci_nit'])) {
-                return ResponseHelper::duplicateError('ci_nit');
-            }
 
-
-            $sql = "INSERT INTO usuario (nombres,apellidos, email, password, telefono, ci_nit) VALUES (?, ?, ?,?, ?, ?)";
+            $sql = "INSERT INTO usuario (nombres, email, password, telefono) VALUES ( ?, ?,?, ?)";
             $stmtUsuario = $this->db->prepare($sql);
 
             $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
 
-            $stmtUsuario->execute([$data['nombres'], $data['apellidos'], $data['email'],  $passwordHash, $data['telefono'] ?? '', $data['ci_nit'] ?? '']);
+            $stmtUsuario->execute([$data['nombres'], $data['email'],  $passwordHash, $data['telefono'] ?? '']);
             $idUsuario = $this->db->lastInsertId();
 
             $this->db->commit();
@@ -57,7 +54,7 @@ class UsuarioModel
             );
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) {
-                return ResponseHelper::duplicateError('email o ci_nit');
+                return ResponseHelper::duplicateError('email');
             }
             return ResponseHelper::databaseError($e->getMessage());
         } catch (Exception $e) {
@@ -75,7 +72,7 @@ class UsuarioModel
     {
         try {
             $sql = "SELECT 
-                    id_usuario, nombres, apellidos, email, telefono, ci_nit, estado
+                    id_usuario, nombres, email, telefono, estado
                 FROM 
                     usuario 
                 WHERE 
@@ -97,10 +94,8 @@ class UsuarioModel
             $usuario = [
                 'id_usuario' => $resultados[0]['id_usuario'],
                 'nombres' => $resultados[0]['nombres'],
-                'apellidos' => $resultados[0]['apellidos'],
                 'email' => $resultados[0]['email'],
                 'telefono' => $resultados[0]['telefono'],
-                'ci_nit' => $resultados[0]['ci_nit'],
                 'estado' => $resultados[0]['estado']
             ];
 
@@ -121,23 +116,17 @@ class UsuarioModel
 
         try {
             // Validaciones previas
-            if (isset($datos['email']) && $this->emailExiste($datos['email'], $idUsuario)) {
+            if ($this->validator->datoExiste('usuario', 'email', $datos['email'], 'id_usuario', $idUsuario)) {
                 return ResponseHelper::duplicateError('email');
             }
 
-            if (isset($datos['ci_nit']) && !empty($datos['ci_nit']) && $this->ciNitExiste($datos['ci_nit'], $idUsuario)) {
-                return ResponseHelper::duplicateError('ci_nit');
-            }
-
             // 1. Actualizar datos del usuario
-            $sqlUsuario = "UPDATE usuario SET nombres = ?, apellidos = ?, email = ?, telefono = ?, ci_nit = ? WHERE id_usuario = ?";
+            $sqlUsuario = "UPDATE usuario SET nombres = ?, email = ?, telefono = ? WHERE id_usuario = ?";
             $stmtUsuario = $this->db->prepare($sqlUsuario);
             $stmtUsuario->execute([
                 $datos['nombres'] ?? '',
-                $datos['apellidos'] ?? '',
                 $datos['email'] ?? '',
                 $datos['telefono'] ?? null,
-                $datos['ci_nit'] ?? null,
                 $idUsuario
             ]);
 
@@ -150,7 +139,7 @@ class UsuarioModel
     }
 
     /**
-     * Desactiva (bloquea) un usuario cambiando su estado a 'inactivo'.
+     * Desactiva (bloquea) un usuario cambiando su estado a 'false'.
      * @param int $id_usuario ID del usuario a desactivar.
      * @param string $rol_usuario Rol del usuario que realiza la acción.
      * @return array Resultado de la operación.
@@ -162,7 +151,7 @@ class UsuarioModel
         }
 
         try {
-            $sql = "UPDATE usuario SET estado = 'inactivo' WHERE id_usuario = ?";
+            $sql = "UPDATE usuario SET estado = 'false' WHERE id_usuario = ?";
             $stmt = $this->db->prepare($sql);
 
             if ($stmt->execute([$id_usuario])) {
@@ -217,60 +206,18 @@ class UsuarioModel
         return null;
     }
 
-    /**
-     * Verifica si un email ya existe en la base de datos.
-     * Puede opcionalmente excluir un ID de usuario de la búsqueda.
-     *
-     * @param string $email El email a verificar.
-     * @param int|null $id_usuario_a_excluir El ID del usuario a excluir de la búsqueda (útil para actualizaciones).
-     * @return bool True si el email existe, false en caso contrario.
-     */
-    private function emailExiste($email, $id_usuario_a_excluir = null)
-    {
-        // 1. Iniciar la consulta base y los parámetros.
-        $sql = "SELECT COUNT(*) as count FROM usuario WHERE email = ?";
-        $params = [$email];
-
-        // 2. Si se proporciona un ID para excluir, se modifica la consulta.
-        if ($id_usuario_a_excluir !== null) {
-            // Añadimos la condición para que no tome en cuenta al usuario que estamos actualizando.
-            $sql .= " AND id_usuario != ?";
-            // Añadimos el ID a la lista de parámetros para la consulta preparada.
-            $params[] = $id_usuario_a_excluir;
-        }
-
-        // 3. Preparar y ejecutar la consulta.
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-        $result = $stmt->fetch();
-
-        // 4. Retornar si el conteo es mayor a cero.
-        return $result['count'] > 0;
-    }
 
     /**
-     * Verifica si un CI o NIT ya existe en la base de datos.
-     * Puede opcionalmente excluir un ID de usuario de la búsqueda.
-     *
-     * @param string $ci_nit El CI o NIT a verificar.
-     * @param int|null $id_usuario_a_excluir El ID del usuario a excluir de la búsqueda.
-     * @return bool True si el CI/NIT existe, false en caso contrario.
+     * Obtiene los datos de un usuario por su ID desde la base de datos.
+     * @param int $id_usuario El ID del usuario.
+     * @return array|null Los datos del usuario o null si no se encuentra.
      */
-    private function ciNitExiste($ci_nit, $id_usuario_a_excluir = null)
+    public function obtenerUsuarioPorId($id_usuario)
     {
-        // La lógica es idéntica a la de emailExiste.
-        $sql = "SELECT COUNT(*) as count FROM usuario WHERE ci_nit = ?";
-        $params = [$ci_nit];
-
-        if ($id_usuario_a_excluir !== null) {
-            $sql .= " AND id_usuario != ?";
-            $params[] = $id_usuario_a_excluir;
-        }
-
+        $sql = "SELECT id_usuario, nombres, rol FROM usuario WHERE id_usuario = :id";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-        $result = $stmt->fetch();
-
-        return $result['count'] > 0;
+        $stmt->bindParam(':id', $id_usuario, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }

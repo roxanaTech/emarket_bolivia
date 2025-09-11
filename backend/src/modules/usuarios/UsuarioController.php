@@ -24,13 +24,24 @@ class UsuarioController
      */
     public function registrar($data)
     {
-        $errores = Validator::validarUsuario($data);
+        $reglasVendedor = [
+            'nombres' => ['requerido'],
+            'email' => ['requerido'],
+            'password' => ['requerido']
+        ];
+        $reglasVendedor = [
+            'email' => ['email']
+        ];
+
+        $errores = Validator::validarCampos($data, $reglasVendedor);
 
         if (!empty($errores)) {
             return ResponseHelper::validationError($errores);
         }
 
-        return $this->model->crear($data);
+        $id_usuario = null;
+
+        return $this->model->crear($data, $id_usuario);
     }
 
     /**
@@ -40,7 +51,16 @@ class UsuarioController
      */
     public function login($data)
     {
-        $errores = Validator::validarLogin($data);
+        $reglasVendedor = [
+            'email' => ['requerido'],
+            'password' => ['requerido']
+        ];
+
+        $reglasVendedor = [
+            'email' => ['email']
+        ];
+
+        $errores = Validator::validarCampos($data, $reglasVendedor);
 
         if (!empty($errores)) {
             return ResponseHelper::validationError($errores);
@@ -54,7 +74,7 @@ class UsuarioController
                     'iss' => 'emarket',
                     'sub' => $usuario['id_usuario'],
                     'iat' => time(),
-                    'exp' => time() + (60 * 60), // Expira en 1 hora
+                    'exp' => time() + (86400),
                     'data' => [
                         'nombres' => $usuario['nombres'],
                         'rol' => $usuario['rol']
@@ -98,7 +118,6 @@ class UsuarioController
 
         return $this->model->modificar($id_usuario, [
             'nombres' => trim($data['nombres'] ?? ''),
-            'apellidos' => trim($data['apellidos'] ?? ''),
             'email' => trim($data['email'] ?? ''),
             'telefono' => trim($data['telefono'] ?? null),
             'ci_nit' => trim($data['ci_nit'] ?? null)
@@ -115,5 +134,14 @@ class UsuarioController
     {
         $id_usuario = $payload->sub;
         return $this->model->eliminarCuenta($id_usuario);
+    }
+
+    /**
+     * Actualiza un token JWT dado un token válido.
+     * @return array Respuesta con el nuevo token y datos de usuario o un error.
+     */
+    public function actualizarTokenPorRol($id_usuario)
+    {
+        return $this->model->obtenerUsuarioPorId($id_usuario);
     }
 }
