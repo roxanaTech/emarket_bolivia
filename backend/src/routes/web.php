@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Usuarios\UsuarioController;
+use App\Modules\Vendedores\VendedorController;
 use App\Utils\ResponseHelper;
 use App\Middlewares\AuthMiddleware;
 
@@ -48,7 +49,6 @@ $router->post('/login', function () use ($pdo) {
 });
 
 // Middleware para rutas protegidas
-// Esta línea es correcta y se debe mantener.
 $router->before('GET|PUT|DELETE', '/usuarios/.*', [AuthMiddleware::class, 'handle']);
 
 // Rutas Protegidas de Usuario
@@ -95,4 +95,50 @@ $router->delete('/usuarios/perfil', function () use ($pdo) {
 // Manejador para rutas no encontradas
 $router->set404(function () {
     ResponseHelper::sendJson(ResponseHelper::error('Ruta no encontrada', 404));
+});
+
+$router->before('POST|GET|PUT', '/vendedores/.*', [AuthMiddleware::class, 'handle']);
+
+// Rutas Protegidas de Vendedores
+
+// Registro de vendedor
+$router->post('/vendedores/registro', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+    //validación de JSON
+    $controller = new VendedorController($pdo);
+    // El controlador obtendrá el ID del usuario del token internamente.
+    $respuesta = $controller->registrar($decoded, $data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Ver perfil vendedor
+$router->get('/vendedores/perfil', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $controller = new VendedorController($pdo);
+    $respuesta = $controller->leer($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Actualizar perfil vendedor
+$router->put('/vendedores/perfil', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+    //validación de JSON
+    $controller = new VendedorController($pdo);
+    // El controlador obtendrá el ID del usuario del token internamente.
+    $respuesta = $controller->actualizar($data, $decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
