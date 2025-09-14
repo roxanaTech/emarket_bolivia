@@ -2,12 +2,14 @@
 
 use App\Modules\Usuarios\UsuarioController;
 use App\Modules\Vendedores\VendedorController;
+use App\Modules\Productos\ProductoController;
 use App\Utils\ResponseHelper;
 use App\Middlewares\AuthMiddleware;
 
 error_log('Cargando rutas en web.php');
 
 // Rutas Públicas
+// ===================================
 
 // Punto de acceso raíz
 $router->get('/', function () {
@@ -35,7 +37,7 @@ $router->post('/usuarios/registro', function () use ($pdo) {
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
 
-// Login
+// Login de usuario
 $router->post('/login', function () use ($pdo) {
     error_log('POST /login called');
     $data = json_decode(file_get_contents("php://input"), true);
@@ -48,10 +50,89 @@ $router->post('/login', function () use ($pdo) {
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
 
-// Middleware para rutas protegidas
-$router->before('GET|PUT|DELETE', '/usuarios/.*', [AuthMiddleware::class, 'handle']);
+// Ruta pública para ver producto por ID (no requiere autenticación)
+$router->post('/productos/verProducto', function () use ($pdo) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $idProducto = $data['id_producto'] ?? null;
 
+    if (!$idProducto) {
+        ResponseHelper::sendJson(ResponseHelper::error('ID de producto requerido', 400));
+        return;
+    }
+
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->getProducto($idProducto);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+// Listar productos del un vendedor
+$router->get('/productos/listarPorVendedor', function () use ($pdo) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $idVendedor = $data['id_vendedor'] ?? null;
+
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->getListaProductosPorVendedor($idVendedor);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+// Listar productos de una subcategoria
+$router->get('/productos/listarPorSubcategoria', function () use ($pdo) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $subcategoria = $data['subcategoria'] ?? null;
+
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->getListaProductosPorNombreSubcategoria($subcategoria);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+// Listar productos de una categoria
+$router->get('/productos/listarPorCategoria', function () use ($pdo) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $categoria = $data['categoria'] ?? null;
+
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->getListaProductosPorNombreCategoria($categoria);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+// Listar productos por su nombre parcial
+$router->get('/productos/listarPorNombre', function () use ($pdo) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $nombre = $data['nombre'] ?? null;
+
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->getListaProductosPorNombreParcial($nombre);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+// Listar productos destacados
+$router->get('/productos/listarDestacados', function () use ($pdo) {
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->getListaProductosMasDestacados();
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+// Ruta pública para buscar productos por filtros 
+$router->post('/productos/buscar', function () use ($pdo) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        ResponseHelper::sendJson(ResponseHelper::error('JSON inválido', 400));
+        return;
+    }
+
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->buscarProductosPorFiltros($data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Middleware para rutas protegidas
+// ===================================
+
+$router->before('GET|PUT|DELETE', '/usuarios/.*', [AuthMiddleware::class, 'handle']);
+$router->before('POST|GET|PUT', '/vendedores/.*', [AuthMiddleware::class, 'handle']);
+
+$router->before('POST', '/productos/registro', [AuthMiddleware::class, 'handle']);
+$router->before('POST', '/productos/actualizar', [AuthMiddleware::class, 'handle']);
+$router->before('DELETE', '/productos/eliminar', [AuthMiddleware::class, 'handle']);
+
+$router->before('GET', '/productos/listarMisProductos', [AuthMiddleware::class, 'handle']);
+$router->before('POST', '/productos/actualizar-campo', [AuthMiddleware::class, 'handle']);
 // Rutas Protegidas de Usuario
+// ===================================
 
 // Ver perfil
 $router->get('/usuarios/perfil', function () use ($pdo) {
@@ -73,9 +154,7 @@ $router->put('/usuarios/perfil', function () use ($pdo) {
         return;
     }
     $data = json_decode(file_get_contents("php://input"), true);
-    //validación de JSON
     $controller = new UsuarioController($pdo);
-    // El controlador obtendrá el ID del usuario del token internamente.
     $respuesta = $controller->actualizar($data, $decoded);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
@@ -88,18 +167,12 @@ $router->delete('/usuarios/perfil', function () use ($pdo) {
         return;
     }
     $controller = new UsuarioController($pdo);
-    // El controlador obtendrá el ID y el rol del token internamente.
     $respuesta = $controller->eliminar($decoded);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
-// Manejador para rutas no encontradas
-$router->set404(function () {
-    ResponseHelper::sendJson(ResponseHelper::error('Ruta no encontrada', 404));
-});
-
-$router->before('POST|GET|PUT', '/vendedores/.*', [AuthMiddleware::class, 'handle']);
 
 // Rutas Protegidas de Vendedores
+// ===================================
 
 // Registro de vendedor
 $router->post('/vendedores/registro', function () use ($pdo) {
@@ -109,9 +182,7 @@ $router->post('/vendedores/registro', function () use ($pdo) {
         return;
     }
     $data = json_decode(file_get_contents("php://input"), true);
-    //validación de JSON
     $controller = new VendedorController($pdo);
-    // El controlador obtendrá el ID del usuario del token internamente.
     $respuesta = $controller->registrar($decoded, $data);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
@@ -136,9 +207,99 @@ $router->put('/vendedores/perfil', function () use ($pdo) {
         return;
     }
     $data = json_decode(file_get_contents("php://input"), true);
-    //validación de JSON
     $controller = new VendedorController($pdo);
-    // El controlador obtendrá el ID del usuario del token internamente.
     $respuesta = $controller->actualizar($data, $decoded);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Rutas Protegidas de Productos
+// ===================================
+
+// Registro de producto
+$router->post('/productos/registro', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $data = $_POST;
+    $files = $_FILES['images'] ?? [];
+
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->registrar($decoded, $files, $data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Registro de producto
+$router->post('/productos/actualizar', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $data = $_POST;
+    $files = $_FILES['images'] ?? [];
+    /*ResponseHelper::sendJson(ResponseHelper::error(
+        'ID de producto no proporcionado.',
+        400,
+        ['datos' => $files]
+    ));*/
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->actualizarProducto($decoded, $files, $data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+//elimnar un producto
+$router->delete('/productos/eliminar', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+    $idProducto = $data['id_producto'] ?? null;
+
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->deleteProducto($idProducto);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+
+// Listar productos propios del vendedor
+$router->get('/productos/listarMisProductos', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->getListaProductosPropiosPorVendedor($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Actualizar campo específico de un producto
+$router->post('/productos/actualizar-campo', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        ResponseHelper::sendJson(ResponseHelper::error('JSON inválido', 400));
+        return;
+    }
+
+    $controller = new ProductoController($pdo);
+    $respuesta = $controller->actualizarCampo($data, $decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Manejador para rutas no encontradas
+$router->set404(function () {
+    ResponseHelper::sendJson(ResponseHelper::error('Ruta no encontrada', 404));
 });

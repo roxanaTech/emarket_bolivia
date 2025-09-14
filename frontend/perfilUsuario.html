@@ -76,6 +76,7 @@
                 <button type="button" class="btn btn-update" id="btnEditar">Editar</button>
                 <button type="submit" class="btn btn-update" id="btnGuardar" style="display:none;">Guardar</button>
                 <button type="button" class="btn btn-delete" onclick="eliminarPerfil()">Eliminar</button>
+                <button type="button" class="btn btn-registro" onclick="registrarProducto()">Registrar Producto</button>
             </div>
         </form>
         <div id="error" class="error"></div>
@@ -200,6 +201,13 @@
             } catch (error) {
                 document.getElementById('error').textContent = `Error al eliminar: ${error.message}`;
             }
+        }
+        async function registrarProducto() {
+            if (!token) {
+                alert('No estás autenticado.');
+            }
+            window.location.href = `${apiUrl}/frontend/registroProducto.html`;
+
         }
 
         document.addEventListener('DOMContentLoaded', cargarPerfil);

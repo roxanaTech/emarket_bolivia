@@ -119,8 +119,13 @@ class VendedorModel
      * @param int $id_vendedor El ID del vendedor a buscar.
      * @return array Resultado de la operación.
      */
-    public function recuperar($id_vendedor)
+    public function recuperar($idUsuario)
     {
+        $idUsuarioInt = (int)$idUsuario;
+        $idVendedor = $this->recuperarIdVendedorPorIdUsuario($idUsuario);
+        if (!$idVendedor) {
+            return ResponseHelper::error('No se encontró un vendedor asociado a este usuario.(ID Usuario: ' . $idVendedor . ').', 404);
+        }
         try {
             // Consulta SQL que une la tabla de vendedores con la de direcciones.
             // Usamos LEFT JOIN para obtener el vendedor incluso si no tiene direcciones.
@@ -135,14 +140,14 @@ class VendedorModel
                     v.id_vendedor = ?";
 
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([$id_vendedor]);
+            $stmt->execute([$idVendedor]);
 
             // Obtenemos todos los resultados. Si un usuario tiene 3 direcciones, obtendremos 3 filas.
             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Si no se encontró ningún registro para ese ID, retornamos un error.
             if (empty($resultados)) {
-                return ResponseHelper::error('Vendedor no encontrado', 404);
+                return ResponseHelper::error('Vendedor no encontrado(ID Usuario: ' . $idVendedor . ').', 404);
             }
 
             // Estructuramos la respuesta para que no se repitan los datos del vendedor.
@@ -183,32 +188,31 @@ class VendedorModel
             return ResponseHelper::databaseError($e->getMessage());
         }
     }
+
     /**
      * Recupera un vendedor usando el ID del usuario.
      * @param int $id_usuario El ID del usuario a buscar.
-     * @return array Resultado de la operación.
+     * @return array|false El resultado de la operación o false si no se encuentra.
      */
-    public function recuperarPorIdUsuario($id_usuario)
+    public function recuperarIdVendedorPorIdUsuario($id_usuario): int|string|false
     {
         try {
             $sql = "SELECT id_vendedor FROM vendedor WHERE id_usuario = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$id_usuario]);
-            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            $result = $stmt->fetchColumn(); // Devuelve solo el valor de la primera columna
 
-            // Si el usuario no es un vendedor
-            if (!$resultado) {
-                return ResponseHelper::error('No se encontró un vendedor asociado a este usuario', 404);
+            if ($result === false) {
+                error_log("Debug - No se encontró vendedor para id_usuario: " . $id_usuario);
             }
 
-            $id_vendedor = $resultado['id_vendedor'];
-
-            // Reutilizamos la función recuperar para obtener todos los datos
-            return $this->recuperar($id_vendedor);
-        } catch (PDOException $e) {
-            return ResponseHelper::databaseError($e->getMessage());
+            return $result; // Puede ser int, string o false
+        } catch (\PDOException $e) {
+            error_log("Error al recuperar id_vendedor por ID de usuario: " . $e->getMessage());
+            return false;
         }
     }
+
     /**
      * Actualiza la información de un vendedor y sus direcciones.
      * @param int $id_vendedor El ID del vendedor a actualizar.
@@ -308,6 +312,29 @@ class VendedorModel
         } catch (Exception $e) {
             $this->db->rollBack();
             return ResponseHelper::databaseError($e->getMessage());
+        }
+    }
+    /**
+     * Recupera la razón social de un vendedor.
+     * @param int $id_vendedor El ID del vendedor.
+     * @return string|false La razón social o false si no se encuentra.
+     */
+    public function getRazonSocialPorIdVendedor($idVendedor): string|false
+    {
+        try {
+            $sql = "SELECT razon_social FROM vendedor WHERE id_vendedor = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idVendedor]);
+            $result = $stmt->fetchColumn(); // Devuelve razon_social directamente
+
+            if ($result === false) {
+                error_log("Debug - No se encontró razon social del vendedor para id_usuario: " . $idVendedor);
+            }
+
+            return $result;
+        } catch (\PDOException $e) {
+            error_log("Error al recuperar razon social del vendedor por ID de usuario: " . $e->getMessage());
+            return false;
         }
     }
 }

@@ -82,7 +82,7 @@ class VendedorController
     public function leer($payload)
     {
         $id_usuario = $payload->sub;
-        return $this->model->recuperarPorIdUsuario($id_usuario);
+        return $this->model->recuperar($id_usuario);
     }
 
     /**
