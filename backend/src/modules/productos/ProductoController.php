@@ -26,7 +26,6 @@ class ProductoController
      *
      * @param array $data Los datos del formulario del producto.
      * @param array $files Los archivos subidos, típicamente $_FILES.
-     * @param int $mainImageIndex El índice de la imagen principal.
      * @return array Un array con el resultado de la operación.
      */
     public function registrar($payload, array $files, array $data): array
@@ -91,8 +90,7 @@ class ProductoController
      *
      * @param array $data Los datos del producto y el ID.
      * @param array $files Los archivos de las imágenes.
-     * @param int $mainImageIndex El índice de la imagen principal.
-     * @param int $userId El ID del usuario autenticado.
+     * @param $payload El ID del usuario autenticado.
      * @return array
      */
     public function actualizarProducto($payload, array $files, array $data): array
@@ -164,7 +162,7 @@ class ProductoController
     /**
      * Recupera la lista de productos propios de un vendedor.
      *
-     * @param int $idUsuario El ID del usuario autenticado.
+     * @param $payload El ID del usuario autenticado.
      * @return array
      */
     public function getListaProductosPropiosPorVendedor($payload): array
@@ -175,7 +173,7 @@ class ProductoController
     /**
      * Recupera la lista de productos de un vendedor.
      *
-     * @param int $idUsuario El ID del usuario autenticado.
+     * @param $idVendedor El ID del vendedor autenticado.
      * @return array
      */
     public function getListaProductosPorVendedor($idVendedor): array
@@ -185,7 +183,7 @@ class ProductoController
     /**
      * Recupera la lista de productos de una subcategoria.
      *
-     * @param int $idUsuario El ID del usuario autenticado.
+     * @param $subcategoria El nombre de la subcategoria.
      * @return array
      */
     public function getListaProductosPorNombreSubcategoria($subcategoria): array
@@ -195,7 +193,7 @@ class ProductoController
     /**
      * Recupera la lista de productos de una categoria.
      *
-     * @param int $idUsuario El ID del usuario autenticado.
+     * @param int $categoria El nombre de la categoria.
      * @return array
      */
     public function getListaProductosPorNombreCategoria($categoria): array

@@ -253,7 +253,7 @@ class ProductoModel
         }
     }
     /**
-     * Recupera la lista de productos de un vendedor, ordenados por subcategoría.
+     * Recupera la lista de productos de un vendedor publica, ordenados por subcategoría.
      *
      * @param int $idVendedor El ID del vendedor.
      * @return array La lista de productos.
