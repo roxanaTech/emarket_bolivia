@@ -5,6 +5,8 @@ use App\Modules\Vendedores\VendedorController;
 use App\Modules\Productos\ProductoController;
 use App\Utils\ResponseHelper;
 use App\Middlewares\AuthMiddleware;
+use App\Modules\Eventos\EventoController;
+use App\Modules\Eventos\ProductoEventoController;
 
 error_log('Cargando rutas en web.php');
 
@@ -113,7 +115,6 @@ $router->post('/productos/buscar', function () use ($pdo) {
         ResponseHelper::sendJson(ResponseHelper::error('JSON inválido', 400));
         return;
     }
-
     $controller = new ProductoController($pdo);
     $respuesta = $controller->buscarProductosPorFiltros($data);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
@@ -131,6 +132,7 @@ $router->before('DELETE', '/productos/eliminar', [AuthMiddleware::class, 'handle
 
 $router->before('GET', '/productos/listarMisProductos', [AuthMiddleware::class, 'handle']);
 $router->before('POST', '/productos/actualizar-campo', [AuthMiddleware::class, 'handle']);
+$router->before('POST|GET|PUT|DELETE', '/eventos/.*', [AuthMiddleware::class, 'handle']);
 // Rutas Protegidas de Usuario
 // ===================================
 
@@ -298,6 +300,139 @@ $router->post('/productos/actualizar-campo', function () use ($pdo) {
     $respuesta = $controller->actualizarCampo($data, $decoded);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
+
+// Rutas Protegidas de Eventos
+// ===================================
+// Registro de evento
+$router->post('/eventos/registrar', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+    /*ResponseHelper::sendJson(ResponseHelper::error(
+        'ID de producto no proporcionado.',
+        400,
+        ['datos' => $data]
+    ));*/
+    $controller = new EventoController($pdo);
+    $respuesta = $controller->registrar($decoded, $data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Ver evento
+$router->get('/eventos/evento', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+    $controller = new EventoController($pdo);
+    $respuesta = $controller->obtenerPorId($data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Actualizar evento
+$router->put('/eventos/actualizar', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+    $controller = new EventoController($pdo);
+    $respuesta = $controller->actualizar($data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Listar eventos del vendedor
+$router->get('/eventos/listarEventos', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+    $controller = new EventoController($pdo);
+    $respuesta = $controller->listarMisEventos($decoded, $data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Actualizar campo estado de evento
+$router->post('/eventos/actualizar-estado', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        ResponseHelper::sendJson(ResponseHelper::error('JSON inválido', 400));
+        return;
+    }
+
+    $controller = new EventoController($pdo);
+    $respuesta = $controller->cambiarEstado($data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+//eliminar un evento
+$router->delete('/eventos/eliminar', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    $controller = new EventoController($pdo);
+    $respuesta = $controller->eliminar($data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+//vincular productos a eventos
+$router->post('/eventos/vincular', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    $controller = new ProductoEventoController($pdo);
+    $respuesta = $controller->vincularProductosAEvento($data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+//cambiar estado de producto vinculado a evento
+$router->post('/eventos/estado-producto-vinculado', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    $controller = new ProductoEventoController($pdo);
+    $respuesta = $controller->cambiarEstadoVinculo($data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+//eliminar producto vinculado a evento
+$router->delete('/eventos/eliminar-producto-vinculado', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    $controller = new ProductoEventoController($pdo);
+    $respuesta = $controller->eliminar($data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
 
 // Manejador para rutas no encontradas
 $router->set404(function () {

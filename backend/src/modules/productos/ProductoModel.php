@@ -159,15 +159,15 @@ class ProductoModel
     /**
      * Recupera los datos básicos de un producto.
      *
-     * @param int $productId El ID del producto.
+     * @param int $idProducto El ID del producto.
      * @return array|false Los datos del producto o false si no se encuentra.
      */
-    public function recuperarProducto(int $productId): array|false
+    public function recuperarProducto(int $idProducto): array|false
     {
         try {
             $sql = "SELECT id_producto, id_vendedor, nombre, descripcion, marca, precio, stock, estado_producto, id_imagen_principal, id_vendedor FROM producto WHERE id_producto = ?";
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([$productId]);
+            $stmt->execute([$idProducto]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
             error_log("Error al recuperar el producto: " . $e->getMessage());

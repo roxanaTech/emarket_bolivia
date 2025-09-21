@@ -32,4 +32,4 @@ Thumbs.db
 
 #carpetas de imagenes
 backend/public/uploads/productos/
-backend/src/modules/eventos/
+#backend/src/modules/eventos/
