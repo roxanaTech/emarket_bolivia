@@ -161,11 +161,37 @@ class ProductoEventoModel
         $stmt->execute([$idProducto, $idEvento]);
         return $stmt->fetchColumn() > 0;
     }
+    /**
+     * valida si el producto ya esta vinculado al evento.
+     * @param int $id El ID del producto.
+     * @return bool true si la cantidad de columnas afectadas es mayor a 0
+     */
     public function productoVinculadoAlEvento($idProducto, $idEvento)
     {
         $sql = "SELECT COUNT(*) FROM producto_evento WHERE id_producto = ? AND id_evento = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$idProducto, $idEvento]);
         return $stmt->fetchColumn() > 0;
+    }
+
+    /**
+     * obtiene los datos de vinculacion a un evento del producto .
+     * @param int $id El ID del producto.
+     * @return array las columnas afectadas
+     */
+    public function obtenerVinculacionActivaPorProducto(int $idProducto): array|false
+    {
+        try {
+            $sql = "SELECT pe.precio_promocional, pe.fecha_vinculacion, e.id_evento, e.nombre_evento, e.tipo_aplicacion, e.valor_descuento, e.condiciones, e.fecha_inicio, e.fecha_vencimiento
+                FROM producto_evento pe
+                JOIN evento e ON pe.id_evento = e.id_evento
+                WHERE pe.id_producto = ? AND pe.estado_vinculacion = 'activo' AND e.estado = 'activo'";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idProducto]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            error_log("Error al obtener vinculación activa: " . $e->getMessage());
+            return false;
+        }
     }
 }

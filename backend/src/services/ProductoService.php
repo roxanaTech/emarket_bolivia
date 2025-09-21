@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Modules\Vendedores\VendedorModel;
 use App\Modules\Productos\ProductoModel;
+use App\Modules\Eventos\EventoModel;
+use App\Modules\Eventos\ProductoEventoModel;
 use App\Utils\ResponseHelper;
 
 class ProductoService
@@ -11,11 +13,15 @@ class ProductoService
 
     private $vendedorModel;
     private $productoModel;
+    private $eventoModel;
+    private $productoEventoModel;
 
     public function __construct($db)
     {
         $this->vendedorModel = new VendedorModel($db);
         $this->productoModel = new ProductoModel($db);
+        $this->eventoModel = new EventoModel($db);
+        $this->productoEventoModel = new ProductoEventoModel($db);
     }
 
 
@@ -99,7 +105,24 @@ class ProductoService
             'razon_social' => $vendedorRazonSocial,
             'rutas_imagenes' => $rutasOrdenadas
         ];
-
+        // Recuperar vinculación activa si existe
+        $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($idProducto);
+        if ($vinculacion) {
+            $datosPublicacion['precio_promocional'] = $vinculacion['precio_promocional'];
+            $datosPublicacion['evento_asociado'] = [
+                'id_evento' => $vinculacion['id_evento'],
+                'nombre_evento' => $vinculacion['nombre_evento'],
+                'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
+                'valor_descuento' => $vinculacion['valor_descuento'],
+                'condiciones' => $vinculacion['condiciones'],
+                'fecha_inicio' => $vinculacion['fecha_inicio'],
+                'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
+                'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
+            ];
+        } else {
+            $datosPublicacion['precio_promocional'] = null;
+            $datosPublicacion['evento_asociado'] = null;
+        }
         return ResponseHelper::success('Datos del producto recuperados exitosamente.', $datosPublicacion);
     }
     /**
@@ -117,8 +140,29 @@ class ProductoService
 
         $productos = $this->productoModel->getMisProductosPorIdVendedor($idVendedor);
 
+        foreach ($productos as &$producto) {
+            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
+            if ($vinculacion) {
+                $producto['precio_promocional'] = $vinculacion['precio_promocional'];
+                $producto['evento_asociado'] = [
+                    'id_evento' => $vinculacion['id_evento'],
+                    'nombre_evento' => $vinculacion['nombre_evento'],
+                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
+                    'valor_descuento' => $vinculacion['valor_descuento'],
+                    'condiciones' => $vinculacion['condiciones'],
+                    'fecha_inicio' => $vinculacion['fecha_inicio'],
+                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
+                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
+                ];
+            } else {
+                $producto['precio_promocional'] = null;
+                $producto['evento_asociado'] = null;
+            }
+        }
+
         return ResponseHelper::success('Productos del vendedor recuperados exitosamente.', $productos);
     }
+
     /**
      * Obtiene la lista de todos los productos de un vendedor.
      *
@@ -132,6 +176,26 @@ class ProductoService
         }
 
         $productos = $this->productoModel->getProductosPorIdVendedor($idVendedor);
+        foreach ($productos as &$producto) {
+            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
+            if ($vinculacion) {
+                $producto['precio_promocional'] = $vinculacion['precio_promocional'];
+                $producto['evento_asociado'] = [
+                    'id_evento' => $vinculacion['id_evento'],
+                    'nombre_evento' => $vinculacion['nombre_evento'],
+                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
+                    'valor_descuento' => $vinculacion['valor_descuento'],
+                    'condiciones' => $vinculacion['condiciones'],
+                    'fecha_inicio' => $vinculacion['fecha_inicio'],
+                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
+                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
+                ];
+            } else {
+                $producto['precio_promocional'] = null;
+                $producto['evento_asociado'] = null;
+            }
+        }
+
 
         return ResponseHelper::success('Productos del vendedor recuperados exitosamente.', $productos);
     }
@@ -148,6 +212,25 @@ class ProductoService
         }
 
         $productos = $this->productoModel->getProductosPorNombreSubcategoria($subcategoria);
+        foreach ($productos as &$producto) {
+            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
+            if ($vinculacion) {
+                $producto['precio_promocional'] = $vinculacion['precio_promocional'];
+                $producto['evento_asociado'] = [
+                    'id_evento' => $vinculacion['id_evento'],
+                    'nombre_evento' => $vinculacion['nombre_evento'],
+                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
+                    'valor_descuento' => $vinculacion['valor_descuento'],
+                    'condiciones' => $vinculacion['condiciones'],
+                    'fecha_inicio' => $vinculacion['fecha_inicio'],
+                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
+                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
+                ];
+            } else {
+                $producto['precio_promocional'] = null;
+                $producto['evento_asociado'] = null;
+            }
+        }
 
         return ResponseHelper::success('Productos de la subcategoria recuperados exitosamente.', $productos);
     }
@@ -164,6 +247,25 @@ class ProductoService
         }
 
         $productos = $this->productoModel->getProductosPorNombreCategoria($categoria);
+        foreach ($productos as &$producto) {
+            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
+            if ($vinculacion) {
+                $producto['precio_promocional'] = $vinculacion['precio_promocional'];
+                $producto['evento_asociado'] = [
+                    'id_evento' => $vinculacion['id_evento'],
+                    'nombre_evento' => $vinculacion['nombre_evento'],
+                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
+                    'valor_descuento' => $vinculacion['valor_descuento'],
+                    'condiciones' => $vinculacion['condiciones'],
+                    'fecha_inicio' => $vinculacion['fecha_inicio'],
+                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
+                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
+                ];
+            } else {
+                $producto['precio_promocional'] = null;
+                $producto['evento_asociado'] = null;
+            }
+        }
 
         return ResponseHelper::success('Productos de la categoria recuperados exitosamente.', $productos);
     }
@@ -180,6 +282,25 @@ class ProductoService
         }
         $palabras = preg_split('/\s+/', strtolower(trim($nombre)));
         $resultados = $this->productoModel->buscarProductosPorPalabras($palabras);
+        foreach ($resultados as &$resultado) {
+            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($resultado['id_producto']);
+            if ($vinculacion) {
+                $resultado['precio_promocional'] = $vinculacion['precio_promocional'];
+                $resultado['evento_asociado'] = [
+                    'id_evento' => $vinculacion['id_evento'],
+                    'nombre_evento' => $vinculacion['nombre_evento'],
+                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
+                    'valor_descuento' => $vinculacion['valor_descuento'],
+                    'condiciones' => $vinculacion['condiciones'],
+                    'fecha_inicio' => $vinculacion['fecha_inicio'],
+                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
+                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
+                ];
+            } else {
+                $resultado['precio_promocional'] = null;
+                $resultado['evento_asociado'] = null;
+            }
+        }
 
         return ResponseHelper::success('Productos recuperados exitosamente.', $resultados);
     }
@@ -192,6 +313,25 @@ class ProductoService
     public function buscarProductos(array $filtros): array
     {
         $productos = $this->productoModel->buscarProductosPorFiltros($filtros);
+        foreach ($productos as &$producto) {
+            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
+            if ($vinculacion) {
+                $producto['precio_promocional'] = $vinculacion['precio_promocional'];
+                $producto['evento_asociado'] = [
+                    'id_evento' => $vinculacion['id_evento'],
+                    'nombre_evento' => $vinculacion['nombre_evento'],
+                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
+                    'valor_descuento' => $vinculacion['valor_descuento'],
+                    'condiciones' => $vinculacion['condiciones'],
+                    'fecha_inicio' => $vinculacion['fecha_inicio'],
+                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
+                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
+                ];
+            } else {
+                $producto['precio_promocional'] = null;
+                $producto['evento_asociado'] = null;
+            }
+        }
 
         return ResponseHelper::success('Productos encontrados.', $productos);
     }
