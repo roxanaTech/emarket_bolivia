@@ -7,6 +7,9 @@ use App\Utils\ResponseHelper;
 use App\Middlewares\AuthMiddleware;
 use App\Modules\Eventos\EventoController;
 use App\Modules\Eventos\ProductoEventoController;
+use App\Modules\Ventas\VentaController;
+use App\Modules\Devoluciones\DevolucionController;
+use App\Modules\Reviews\ReviewController;
 
 error_log('Cargando rutas en web.php');
 
@@ -120,6 +123,21 @@ $router->post('/productos/buscar', function () use ($pdo) {
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
 
+// Listar reseñas activas de un producto (público, sin autenticación requerida)
+$router->get('/reviews/producto/{id_producto}', function ($id_producto) use ($pdo) {
+    $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+    if ($pagina < 1) $pagina = 1;
+
+    if (!is_numeric($id_producto)) {
+        ResponseHelper::sendJson(ResponseHelper::error('ID de producto inválido', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Reviews\ReviewController($pdo);
+    $respuesta = $controller->listarResenasPorProducto((int)$id_producto, $pagina);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
 // Middleware para rutas protegidas
 // ===================================
 
@@ -133,6 +151,16 @@ $router->before('DELETE', '/productos/eliminar', [AuthMiddleware::class, 'handle
 $router->before('GET', '/productos/listarMisProductos', [AuthMiddleware::class, 'handle']);
 $router->before('POST', '/productos/actualizar-campo', [AuthMiddleware::class, 'handle']);
 $router->before('POST|GET|PUT|DELETE', '/eventos/.*', [AuthMiddleware::class, 'handle']);
+
+$router->before('POST|GET|PUT|DELETE', '/ventas/.*', [AuthMiddleware::class, 'handle']);
+$router->before('POST|GET|PUT|DELETE', '/devoluciones/.*', [AuthMiddleware::class, 'handle']);
+$router->before('POST|GET|PUT|DELETE', '/carrito/.*', [AuthMiddleware::class, 'handle']);
+// Rutas protegidas de reviews (solo las que requieren autenticación)
+$router->before('POST', '/reviews/.*', [AuthMiddleware::class, 'handle']); // crear
+$router->before('GET', '/reviews/mi-resena/.*', [AuthMiddleware::class, 'handle']); // obtener propia
+$router->before('PUT', '/reviews/.*', [AuthMiddleware::class, 'handle']); // actualizar
+$router->before('DELETE', '/reviews/.*', [AuthMiddleware::class, 'handle']); // eliminar
+
 // Rutas Protegidas de Usuario
 // ===================================
 
@@ -433,6 +461,397 @@ $router->delete('/eventos/eliminar-producto-vinculado', function () use ($pdo) {
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
 
+// Rutas Protegidas del Carrito
+// ===================================
+// Agregar producto al carrito
+$router->post('/carrito/agregar', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        ResponseHelper::sendJson(ResponseHelper::error('JSON inválido', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Carrito\CarritoController($pdo);
+    $respuesta = $controller->agregarProducto($decoded, $data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Listar carrito activo del usuario
+$router->get('/carrito/listar', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Carrito\CarritoController($pdo);
+    $respuesta = $controller->listarCarrito($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Actualizar cantidad de un ítem en el carrito
+$router->put('/carrito/actualizar-cantidad', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        ResponseHelper::sendJson(ResponseHelper::error('JSON inválido', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Carrito\CarritoController($pdo);
+    $respuesta = $controller->actualizarCantidad($decoded, $data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Eliminar un ítem del carrito
+$router->delete('/carrito/eliminar-item', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $id_item = json_decode(file_get_contents("php://input"), true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        ResponseHelper::sendJson(ResponseHelper::error('JSON inválido', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Carrito\CarritoController($pdo);
+    $respuesta = $controller->eliminarItem($decoded, $id_item);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Vaciar carrito (eliminar todos los ítems)
+$router->delete('/carrito/vaciar', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Carrito\CarritoController($pdo);
+    $respuesta = $controller->vaciarCarrito($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Marcar carrito como convertido (al finalizar compra)
+$router->post('/carrito/convertir', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Carrito\CarritoController($pdo);
+    $respuesta = $controller->marcarComoConvertido($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Rutas Protegidas de Ventas
+// ===================================
+// Crear una nueva venta (finalizar compra de un grupo de productos)
+$router->post('/ventas/crear', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($input)) {
+        ResponseHelper::sendJson(ResponseHelper::error('Datos inválidos', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Ventas\VentaController($pdo);
+    $respuesta = $controller->crearVenta($decoded, $input);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+
+
+// Listar todas las ventas del comprador autenticado
+$router->get('/ventas/comprador', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Ventas\VentaController($pdo);
+    $respuesta = $controller->listarVentasComprador($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200, $decoded->sub);
+});
+
+// Listar todas las ventas del vendedor autenticado
+$router->get('/ventas/vendedor', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Ventas\VentaController($pdo);
+    $respuesta = $controller->listarVentasVendedor($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+// Obtener los detalles de una venta específica
+$router->get('/ventas/{id}', function ($id) use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+
+    $controller = new \App\Modules\Ventas\VentaController($pdo);
+    $respuesta = $controller->obtenerVenta((int)$id, $decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Actualizar el estado de una venta (pagada, enviada, cancelada, etc.)
+$router->put('/ventas/{id}/estado', function ($id) use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    $nuevoEstado = $input['estado'] ?? null;
+
+    if (!$nuevoEstado || !is_string($nuevoEstado)) {
+        ResponseHelper::sendJson(ResponseHelper::error('Estado no proporcionado', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Ventas\VentaController($pdo);
+    $respuesta = $controller->actualizarEstado((int)$id, $nuevoEstado, $decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Subir/completar comprobante de pago (para transferencia, QR, etc.)
+$router->post('/ventas/{id}/comprobante', function ($id) use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    $comprobante = $input['comprobante'] ?? null;
+
+    if (!$comprobante || !is_string($comprobante)) {
+        ResponseHelper::sendJson(ResponseHelper::error('Comprobante no válido', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Ventas\VentaController($pdo);
+    $respuesta = $controller->subirComprobante((int)$id, $comprobante, $decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Rutas Protegidas de Devoluciones
+// ===================================
+// Solicitar una nueva devolución
+$router->post('/devoluciones/solicitar', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($input)) {
+        ResponseHelper::sendJson(ResponseHelper::error('Datos inválidos', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Devoluciones\DevolucionController($pdo);
+    $respuesta = $controller->solicitarDevolucion($decoded, $input);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Listar devoluciones del comprador autenticado
+$router->get('/devoluciones/comprador', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Devoluciones\DevolucionController($pdo);
+    $respuesta = $controller->listarDevolucionesComprador($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Listar devoluciones del vendedor autenticado
+$router->get('/devoluciones/vendedor', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Devoluciones\DevolucionController($pdo);
+    $respuesta = $controller->listarDevolucionesVendedor($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+// Subir imagen para una devolución existente
+$router->post('/devoluciones/{id}/imagen', function ($id) use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Devoluciones\DevolucionController($pdo);
+    $respuesta = $controller->subirImagenDevolucion((int)$id, $_FILES, $decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Aprobar una devolución (solo vendedor)
+$router->post('/devoluciones/{id}/aprobar', function ($id) use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Devoluciones\DevolucionController($pdo);
+    $respuesta = $controller->aprobarDevolucion((int)$id, $decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Rechazar una devolución (solo vendedor)
+$router->post('/devoluciones/{id}/rechazar', function ($id) use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    $comentarios = $input['comentarios'] ?? '';
+
+    $controller = new \App\Modules\Devoluciones\DevolucionController($pdo);
+    $respuesta = $controller->rechazarDevolucion((int)$id, $comentarios, $decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Procesar una devolución aprobada (solo vendedor)
+$router->post('/devoluciones/{id}/procesar', function ($id) use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($input)) {
+        ResponseHelper::sendJson(ResponseHelper::error('Datos inválidos', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Devoluciones\DevolucionController($pdo);
+    $respuesta = $controller->procesarDevolucion((int)$id, $input, $decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+// Rutas Protegidas de Reviews (Reseñas)
+// ===================================
+// Crear una nueva reseña
+$router->post('/reviews/crear', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        ResponseHelper::sendJson(ResponseHelper::error('JSON inválido', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Reviews\ReviewController($pdo);
+    $respuesta = $controller->crearReview($decoded, $data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Obtener la reseña propia de un usuario para un producto (para edición)
+$router->get('/reviews/mi-resena/{id_producto}', function ($id_producto) use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    if (!is_numeric($id_producto)) {
+        ResponseHelper::sendJson(ResponseHelper::error('ID de producto inválido', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Reviews\ReviewController($pdo);
+    $respuesta = $controller->obtenerReviewPropia($decoded, (int)$id_producto);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Actualizar una reseña existente
+$router->put('/reviews/{id_review}', function ($id_review) use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    if (!is_numeric($id_review)) {
+        ResponseHelper::sendJson(ResponseHelper::error('ID de reseña inválido', 400));
+        return;
+    }
+
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        ResponseHelper::sendJson(ResponseHelper::error('JSON inválido', 400));
+        return;
+    }
+
+    // Añadir el ID de la reseña al array de datos para el controlador
+    $data['id_review'] = (int)$id_review;
+
+    $controller = new \App\Modules\Reviews\ReviewController($pdo);
+    $respuesta = $controller->actualizarReview($decoded, $data);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+
+// Eliminar (lógicamente) una reseña
+$router->delete('/reviews/{id_review}', function ($id_review) use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    if (!is_numeric($id_review)) {
+        ResponseHelper::sendJson(ResponseHelper::error('ID de reseña inválido', 400));
+        return;
+    }
+
+    $controller = new \App\Modules\Reviews\ReviewController($pdo);
+    $respuesta = $controller->eliminarReview($decoded, (int)$id_review);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
 
 // Manejador para rutas no encontradas
 $router->set404(function () {
