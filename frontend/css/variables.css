@@ -1,0 +1,10 @@
+/* === variables.css === */
+:root {
+    --color-azul: #02187D;
+    --color-rojo: #F40009;
+    --color-amarillo: #FEBD69;
+    --color-verde: #1DB954;
+    --color-resaltado: #a1d718ff;
+    --gris-sutil: #fafafa;
+    /* Gris muy suave, casi blanco */
+}

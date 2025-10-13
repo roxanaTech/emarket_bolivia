@@ -1,0 +1,226 @@
+/* === NAVBAR SUPERIOR === */
+.top-nav {
+    background-color: var(--color-azul);
+    border-bottom: 1px solid #dee2e6;
+    padding: 10px 0;
+}
+
+.top-nav .nav-link {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.top-nav .nav-link:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.btn-login {
+    background-color: var(--gris-sutil);
+    color: var(--color-azul);
+    border: 2px solid var(--color-azul);
+    border-radius: 20px;
+    font-weight: 500;
+    padding: 6px 16px;
+    font-size: 0.9rem;
+}
+
+.btn-login:hover {
+    background-color: var(--color-azul);
+    border: 2px solid var(--gris-sutil);
+    color: white;
+}
+
+/* === BOTONES === */
+.btn-primary {
+    background-color: var(--color-rojo);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #b30007;
+}
+
+.btn-success {
+    background-color: var(--color-verde);
+    border: none;
+}
+
+.btn-success:hover {
+    background-color: #128c3a;
+}
+
+
+/* Dentro de tu bloque <style> */
+
+/* Estilos para el contenedor de usuario autenticado */
+.user-profile-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    /* Asegura que no tenga subrayado por ser un enlace */
+}
+
+/* Estilos para el avatar de usuario */
+.user-avatar-nav {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--gris-sutil);
+}
+
+/* Estilos para el nombre del usuario */
+.user-name-nav {
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin: 0;
+    white-space: nowrap;
+    /* Evita que el nombre se corte */
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* === CARRUSEL === */
+.carousel-item {
+    height: 400px;
+}
+
+.carousel-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* === CATEGORÍAS POPULARES === */
+.section-title {
+    color: var(--color-azul);
+    font-weight: bold;
+    font-size: 2rem;
+    margin-bottom: 30px;
+}
+
+.category-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+}
+
+.category-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.category-name {
+    color: var(--color-azul);
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1.1rem;
+}
+
+.btn-view-more {
+    border: 2px solid var(--color-azul);
+    color: var(--color-azul);
+    border-radius: 25px;
+    padding: 8px 20px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.btn-view-more:hover {
+    background-color: var(--color-azul);
+    color: white;
+}
+
+.btn-add-cart {
+    background-color: var(--color-azul);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    width: 100%;
+    padding: 10px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.btn-add-cart:hover {
+    background-color: #01125a;
+    /* un azul ligeramente más oscuro */
+    color: white;
+    transform: none;
+    /* evita conflicto con la transform del card */
+}
+
+.enlace-title {
+    color: #2149ae;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.text-price {
+    color: var(--color-azul);
+    font-weight: 650;
+}
+
+.enlace-title:hover {
+    color: var(--color-azul);
+    font-weight: bolder;
+}
+
+/* === FOOTER === */
+footer {
+    background-color: var(--color-azul);
+    color: var(--gris-sutil);
+    padding: 40px 0 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+footer h5 {
+    color: var(--gris-sutil);
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+footer a {
+    color: var(--gris-sutil);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.social-icons i {
+    font-size: 1.5rem;
+    color: var(--gris-sutil);
+}
+
+.footer-copyright {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}

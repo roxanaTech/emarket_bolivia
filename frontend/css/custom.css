@@ -1,0 +1,56 @@
+/* custom.css */
+.text-azul {
+    color: var(--color-azul);
+}
+
+.border-azul {
+    border-color: var(--color-azul);
+}
+
+.text-rojo {
+    color: var(--color-rojo);
+}
+
+.border-rojo {
+    border-color: var(--color-rojo);
+}
+
+.text-amarillo {
+    color: var(--color-amarillo);
+}
+
+.border-amarillo {
+    border-color: var(--color-amarillo);
+}
+
+.text-verde {
+    color: var(--color-verde);
+}
+
+.border-verde {
+    border-color: var(--color-verde);
+}
+
+.text-gris {
+    color: var(--gris-sutil);
+}
+
+.border-gris {
+    border-color: var(--gris-sutil);
+}
+
+.fondo-azul {
+    background-color: var(--color-azul);
+}
+
+.fondo-claro {
+    background-color: var(--gris-sutil);
+}
+
+.fondo-rojo {
+    background-color: var(--color-rojo);
+}
+
+.hover-text-azul:hover {
+    color: var(--color-azul);
+}
