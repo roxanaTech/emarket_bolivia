@@ -11,12 +11,19 @@ class ReviewModel
         $this->db = $db;
     }
 
-    public function crearReview($idProducto, $idUsuario, $calificacion, $comentario = null)
+    public function crearReview(int $idProducto, int $idUsuario, int $calificacion, string $comentario, string $titulo, bool $verificada): int|false
     {
-        $sql = "INSERT INTO review (id_producto, id_usuario, calificacion, comentario) 
-                VALUES (?, ?, ?, ?)";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$idProducto, $idUsuario, $calificacion, $comentario]);
+        try {
+            $stmt = $this->db->prepare("
+            INSERT INTO review (id_producto, titulo, id_usuario, calificacion, comentario, verificada, fecha_creacion, estado)
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), 'activo')
+        ");
+            $stmt->execute([$idProducto, $titulo, $idUsuario, $calificacion, $comentario, $verificada]);
+            return $this->db->lastInsertId();
+        } catch (\PDOException $e) {
+            error_log("Error al crear reseña: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function obtenerReviewPorId($idReview)
@@ -45,7 +52,7 @@ class ReviewModel
                 FROM review r
                 INNER JOIN usuario u ON r.id_usuario = u.id_usuario
                 WHERE r.id_producto = ? AND r.estado = 'activo'
-                ORDER BY r.fecha DESC
+                ORDER BY r.fecha_creacion DESC
                 LIMIT ? OFFSET ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$idProducto, $porPagina, $offset]);
@@ -54,7 +61,7 @@ class ReviewModel
 
     public function actualizarReview($idReview, $calificacion, $comentario = null)
     {
-        $sql = "UPDATE review SET calificacion = ?, comentario = ? WHERE id_review = ?";
+        $sql = "UPDATE review SET titulo = ?, calificacion = ?, comentario = ? WHERE id_review = ?";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$calificacion, $comentario, $idReview]);
     }
@@ -78,4 +85,5 @@ class ReviewModel
         $stmt->execute([$idProducto, $idUsuario]);
         return $stmt->fetch(\PDO::FETCH_ASSOC) !== false;
     }
+   
 }

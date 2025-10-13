@@ -25,27 +25,8 @@ class ReviewController
      */
     public function crearReview($payload, array $data): array
     {
-        $idUsuario = $payload->sub;
-        $idProducto = $data['id_producto'] ?? null;
-        $calificacion = $data['calificacion'] ?? null;
-        $comentario = $data['comentario'] ?? null;
-
-        if (!$idProducto) {
-            return ResponseHelper::error('ID de producto es requerido.', 400);
-        }
-
-        // Validaciones
-        $error = $this->reviewService->validarCalificacion($calificacion);
-        if ($error) return $error;
-
-        $error = $this->reviewService->validarCompraEntregada($idUsuario, $idProducto);
-        if ($error) return $error;
-
-        $error = $this->reviewService->validarDuplicado($idUsuario, $idProducto);
-        if ($error) return $error;
-
         // Crear reseña
-        if ($this->reviewModel->crearReview($idProducto, $idUsuario, $calificacion, $comentario)) {
+        if ($this->reviewService->crearReview($payload->sub, $data)) {
             return ResponseHelper::success('Reseña creada exitosamente.');
         }
 
@@ -82,23 +63,8 @@ class ReviewController
     {
         $idUsuario = $payload->sub;
         $idReview = $data['id_review'] ?? null;
-        $calificacion = $data['calificacion'] ?? null;
-        $comentario = $data['comentario'] ?? null;
-
-        if (!$idReview) {
-            return ResponseHelper::error('ID de reseña es requerido.', 400);
-        }
-
-        // Validar autoría
-        $error = $this->reviewService->validarAutoria($idReview, $idUsuario);
-        if ($error) return $error;
-
-        // Validar calificación
-        $error = $this->reviewService->validarCalificacion($calificacion);
-        if ($error) return $error;
-
         // Actualizar
-        if ($this->reviewModel->actualizarReview($idReview, $calificacion, $comentario)) {
+        if ($this->reviewService->actualizarReview($idReview, $idUsuario, $data)) {
             return ResponseHelper::success('Reseña actualizada exitosamente.');
         }
 
@@ -116,11 +82,7 @@ class ReviewController
     {
         $idUsuario = $payload->sub;
 
-        // Validar autoría
-        $error = $this->reviewService->validarAutoria($idReview, $idUsuario);
-        if ($error) return $error;
-
-        if ($this->reviewModel->eliminarReview($idReview)) {
+        if ($this->reviewService->eliminarReview($idReview, $idUsuario)) {
             return ResponseHelper::success('Reseña eliminada exitosamente.');
         }
 
