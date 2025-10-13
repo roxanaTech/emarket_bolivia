@@ -8,14 +8,18 @@ use PDOException;
 use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use App\Services\UsuarioService;
+
 
 class UsuarioController
 {
     private $model;
+    private $service;
 
     public function __construct($pdo)
     {
         $this->model = new UsuarioModel($pdo);
+        $this->service = new UsuarioService($pdo);
     }
     /**
      * Registra un nuevo usuario
@@ -119,8 +123,8 @@ class UsuarioController
         return $this->model->modificar($id_usuario, [
             'nombres' => trim($data['nombres'] ?? ''),
             'email' => trim($data['email'] ?? ''),
-            'telefono' => trim($data['telefono'] ?? null),
-            'ci_nit' => trim($data['ci_nit'] ?? null)
+            'password' => trim($data['password'] ?? ''),
+            'telefono' => trim($data['telefono'] ?? '')
         ]);
     }
 
@@ -135,7 +139,27 @@ class UsuarioController
         $id_usuario = $payload->sub;
         return $this->model->eliminarCuenta($id_usuario);
     }
-
+    /**
+     * Actualiza la imagen de perfil de un usuario
+     * @param string $authHeader Encabezado de autorización con el token JWT
+     * @param array $files la imagen
+     * @return array Respuesta con estado
+     */
+    public function actualizarImagenPerfil(array $files, $payload): array
+    {
+        $id_usuario = $payload->sub;
+        return $this->service->subirImagenPerfil($files, $id_usuario);
+    }
+    /**
+     * Restablece la imagen de perfil de un usuario
+     * @param string $authHeader Encabezado de autorización con el token JWT
+     * @return array Respuesta con estado
+     */
+    public function eliminarImagenPerfil($payload): array
+    {
+        $id_usuario = $payload->sub;
+        return $this->model->restablecerAvatar($id_usuario);
+    }
     /**
      * Actualiza un token JWT dado un token válido.
      * @return array Respuesta con el nuevo token y datos de usuario o un error.
@@ -143,5 +167,14 @@ class UsuarioController
     public function actualizarTokenPorRol($id_usuario)
     {
         return $this->model->obtenerUsuarioPorId($id_usuario);
+    }
+    /**
+     * obtener la ruta de la imagen de perfil.
+     * @return array Respuesta con el nuevo token y datos de usuario o un error.
+     */
+    public function obtenerImagenPerfil($payload)
+    {
+        $id_usuario = $payload->sub;
+        return $this->model->obtenerImagenPerfil($id_usuario);
     }
 }

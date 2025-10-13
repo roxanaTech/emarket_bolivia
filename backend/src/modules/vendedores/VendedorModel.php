@@ -319,7 +319,7 @@ class VendedorModel
      * @param int $id_vendedor El ID del vendedor.
      * @return string|false La razón social o false si no se encuentra.
      */
-    public function getRazonSocialPorIdVendedor($idVendedor): string|false
+    public function obtenerRazonSocialPorIdVendedor($idVendedor): string|false
     {
         try {
             $sql = "SELECT razon_social FROM vendedor WHERE id_vendedor = ?";
@@ -332,6 +332,30 @@ class VendedorModel
             }
 
             return $result;
+        } catch (\PDOException $e) {
+            error_log("Error al recuperar razon social del vendedor por ID de usuario: " . $e->getMessage());
+            return false;
+        }
+    }
+    /**
+     * Recupera el nombre de la empresa usando el ID del usuario.
+     *
+     * @param int $idUsuario El ID del usuario.
+     * @return int|false El nombre de la empresa o false si no se encuentra.
+     */
+    public function getRazonSocialPorIdUsuario($idUsuario): string|false
+    {
+        try {
+            $sql = "SELECT razon_social FROM vendedor WHERE id_usuario = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idUsuario]);
+            $result = $stmt->fetchColumn();
+
+            if ($result === false) {
+                error_log("Debug - No se encontró razon social del vendedor para id_usuario: " . $idUsuario);
+            }
+
+            return $result; // Puede ser string o false
         } catch (\PDOException $e) {
             error_log("Error al recuperar razon social del vendedor por ID de usuario: " . $e->getMessage());
             return false;

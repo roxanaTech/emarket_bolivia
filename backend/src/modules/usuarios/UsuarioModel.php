@@ -220,4 +220,54 @@ class UsuarioModel
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    /**
+     * Actualizar la ruta de imagen del perfil de usuario.
+     * @param int $id_usuario El ID del usuario.
+     * @return array|null Los datos del usuario o null si no se encuentra.
+     */
+    public function actualizarImagenPerfil($idUsuario, $ruta)
+    {
+        // Guardar en base de datos
+        $sql = "UPDATE usuario SET imagen_perfil = :nombre WHERE id_usuario = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':nombre', $ruta);
+        $stmt->bindParam(':id', $idUsuario);
+
+        if ($stmt->execute()) {
+            $urlPublica = "/uploads/usuarios/" . $ruta;
+            return ResponseHelper::success('Imagen subida exitosamente.', ['url' => $urlPublica]);
+        } else {
+            // Intentar borrar el archivo si falla la BD
+            $rutaArchivo = __DIR__ . '/../../../public/uploads/usuarios/' . $ruta;
+            if (file_exists($rutaArchivo)) {
+                unlink($rutaArchivo);
+            }
+            return ResponseHelper::error('Error al registrar la imagen en la base de datos.', 500);
+        }
+    }
+    public function restablecerAvatar($idUsuario)
+    {
+        $avatarPorDefecto = "https://i.pravatar.cc/150?img=" . ($idUsuario % 70 + 1);
+        $sql = "UPDATE usuario SET imagen_perfil = ? WHERE id_usuario = ?";
+        $stmt = $this->db->prepare($sql);
+
+        if ($stmt->execute([$avatarPorDefecto, $idUsuario])) {
+            return ResponseHelper::success('Avatar restablecido al predeterminado');
+        }
+        return ResponseHelper::error('Error al restablecer el avatar', 500);
+    }
+    public function obtenerPorId(int $idUsuario): ?array
+    {
+        $sql = "SELECT id_usuario, imagen_perfil FROM usuario WHERE id_usuario = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$idUsuario]);
+        return $stmt->fetch() ?: null;
+    }
+    public function obtenerImagenPerfil(int $idUsuario): ?array
+    {
+        $sql = "SELECT imagen_perfil FROM usuario WHERE id_usuario = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$idUsuario]);
+        return $stmt->fetch() ?: null;
+    }
 }
