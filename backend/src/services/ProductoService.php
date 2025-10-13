@@ -7,6 +7,7 @@ use App\Modules\Productos\ProductoModel;
 use App\Modules\Eventos\EventoModel;
 use App\Modules\Eventos\ProductoEventoModel;
 use App\Utils\ResponseHelper;
+use App\Utils\Validator;
 
 class ProductoService
 {
@@ -15,6 +16,7 @@ class ProductoService
     private $productoModel;
     private $eventoModel;
     private $productoEventoModel;
+    private $validator;
 
     public function __construct($db)
     {
@@ -22,6 +24,7 @@ class ProductoService
         $this->productoModel = new ProductoModel($db);
         $this->eventoModel = new EventoModel($db);
         $this->productoEventoModel = new ProductoEventoModel($db);
+        $this->validator = new Validator($db);
     }
 
 
@@ -43,7 +46,7 @@ class ProductoService
      * @param int $idUsuario El ID del usuario.
      * @return int|false El ID del vendedor o false si no se encuentra.
      */
-    public function getVendedorIdPorIdUsuario(int $idUsuario): int|false
+    public function obtenerVendedorIdPorIdUsuario(int $idUsuario): int|false
     {
         $idVendedor = $this->vendedorModel->recuperarIdVendedorPorIdUsuario($idUsuario);
 
@@ -65,13 +68,13 @@ class ProductoService
         }
 
         // Recuperar la razón social del vendedor
-        $vendedorRazonSocial = $this->vendedorModel->getRazonSocialPorIdVendedor($producto['id_vendedor']);
+        $vendedorRazonSocial = $this->vendedorModel->obtenerRazonSocialPorIdVendedor($producto['id_vendedor']);
         if (!$vendedorRazonSocial) {
             return ResponseHelper::error('Vendedor no encontrado.', 404);
         }
 
         // Recuperar las rutas de las imágenes
-        $imagenes = $this->productoModel->getImagenes($idProducto);
+        $imagenes = $this->productoModel->obtenerImagenes($idProducto);
         if (empty($imagenes)) {
             return ResponseHelper::error('Imágenes del producto no encontradas.', 404);
         }
@@ -101,7 +104,16 @@ class ProductoService
             'marca' => $producto['marca'],
             'precio' => $producto['precio'],
             'stock' => $producto['stock'],
+            'sku' => $producto['sku'],
+            'codigo' => $producto['codigo'],
             'estado_producto' => $producto['estado_producto'],
+            'color' => $producto['color'],
+            'modelo' => $producto['modelo'],
+            'peso' => $producto['peso'],
+            'promedio_calificacion' => $producto['promedio_calificacion'],
+            'total_opiniones' => $producto['total_opiniones'],
+            'fecha_publicacion' => $producto['fecha_publicacion'],
+            'dimensiones' => $producto['dimensiones'],
             'razon_social' => $vendedorRazonSocial,
             'rutas_imagenes' => $rutasOrdenadas
         ];
@@ -131,36 +143,24 @@ class ProductoService
      * @param int $idUsuario El ID del usuario autenticado.
      * @return array
      */
-    public function getlistaMisProductos(int $idUsuario): array
+    public function obtenerMisProductos(int $idUsuario, int $pagina = 1, int $por_pagina = 10): array
     {
-        $idVendedor = $this->getVendedorIdPorIdUsuario($idUsuario);
+        $idVendedor = $this->obtenerVendedorIdPorIdUsuario($idUsuario);
         if (!$idVendedor) {
             return ResponseHelper::error('No se encontró un vendedor asociado a este usuario.', 404);
         }
 
-        $productos = $this->productoModel->getMisProductosPorIdVendedor($idVendedor);
-
-        foreach ($productos as &$producto) {
-            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
-            if ($vinculacion) {
-                $producto['precio_promocional'] = $vinculacion['precio_promocional'];
-                $producto['evento_asociado'] = [
-                    'id_evento' => $vinculacion['id_evento'],
-                    'nombre_evento' => $vinculacion['nombre_evento'],
-                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
-                    'valor_descuento' => $vinculacion['valor_descuento'],
-                    'condiciones' => $vinculacion['condiciones'],
-                    'fecha_inicio' => $vinculacion['fecha_inicio'],
-                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
-                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
-                ];
-            } else {
-                $producto['precio_promocional'] = null;
-                $producto['evento_asociado'] = null;
-            }
+        $total = $this->productoModel->contarProductosPorIdVendedor($idVendedor);
+        if ($total === 0) {
+            return $this->respuestaPaginada([], 0, $pagina, $por_pagina);
         }
 
-        return ResponseHelper::success('Productos del vendedor recuperados exitosamente.', $productos);
+        $productos = $this->productoModel->obtenerProductosPorIdVendedor($idVendedor, $pagina, $por_pagina);
+        foreach ($productos as &$producto) {
+            $this->enriquecerProductoConPromocion($producto);
+        }
+
+        return $this->respuestaPaginada($productos, $total, $pagina, $por_pagina, 'Productos del vendedor recuperados exitosamente.');
     }
 
     /**
@@ -169,35 +169,23 @@ class ProductoService
      * @param int $idVendedor El ID del usuario autenticado.
      * @return array
      */
-    public function getlistaProductosPorVendedor(int $idVendedor): array
+    public function obtenerProductosPorVendedor(int $idVendedor, int $pagina = 1, int $por_pagina = 10): array
     {
         if (!$idVendedor) {
             return ResponseHelper::error('No se encontró un vendedor.', 404);
         }
 
-        $productos = $this->productoModel->getProductosPorIdVendedor($idVendedor);
-        foreach ($productos as &$producto) {
-            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
-            if ($vinculacion) {
-                $producto['precio_promocional'] = $vinculacion['precio_promocional'];
-                $producto['evento_asociado'] = [
-                    'id_evento' => $vinculacion['id_evento'],
-                    'nombre_evento' => $vinculacion['nombre_evento'],
-                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
-                    'valor_descuento' => $vinculacion['valor_descuento'],
-                    'condiciones' => $vinculacion['condiciones'],
-                    'fecha_inicio' => $vinculacion['fecha_inicio'],
-                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
-                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
-                ];
-            } else {
-                $producto['precio_promocional'] = null;
-                $producto['evento_asociado'] = null;
-            }
+        $total = $this->productoModel->contarProductosPorIdVendedor($idVendedor);
+        if ($total === 0) {
+            return $this->respuestaPaginada([], 0, $pagina, $por_pagina);
         }
 
+        $productos = $this->productoModel->obtenerProductosPorIdVendedor($idVendedor, $pagina, $por_pagina);
+        foreach ($productos as &$producto) {
+            $this->enriquecerProductoConPromocion($producto);
+        }
 
-        return ResponseHelper::success('Productos del vendedor recuperados exitosamente.', $productos);
+        return $this->respuestaPaginada($productos, $total, $pagina, $por_pagina, 'Productos del vendedor recuperados exitosamente.');
     }
     /**
      * Obtiene la lista de todos los productos de un vendedor.
@@ -205,34 +193,23 @@ class ProductoService
      * @param int $subcategoria El nombre de la subcategoria.
      * @return array
      */
-    public function getlistaProductosPorSubcategoria($subcategoria): array
+    public function obtenerProductosPorSubcategoria($subcategoria, int $pagina = 1, int $por_pagina = 10): array
     {
         if (!$subcategoria) {
             return ResponseHelper::error('No se encontró suficientes datos.', 404);
         }
 
-        $productos = $this->productoModel->getProductosPorNombreSubcategoria($subcategoria);
-        foreach ($productos as &$producto) {
-            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
-            if ($vinculacion) {
-                $producto['precio_promocional'] = $vinculacion['precio_promocional'];
-                $producto['evento_asociado'] = [
-                    'id_evento' => $vinculacion['id_evento'],
-                    'nombre_evento' => $vinculacion['nombre_evento'],
-                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
-                    'valor_descuento' => $vinculacion['valor_descuento'],
-                    'condiciones' => $vinculacion['condiciones'],
-                    'fecha_inicio' => $vinculacion['fecha_inicio'],
-                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
-                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
-                ];
-            } else {
-                $producto['precio_promocional'] = null;
-                $producto['evento_asociado'] = null;
-            }
+        $total = $this->productoModel->contarProductosPorIDSubcategoria($subcategoria);
+        if ($total === 0) {
+            return $this->respuestaPaginada([], 0, $pagina, $por_pagina);
         }
 
-        return ResponseHelper::success('Productos de la subcategoria recuperados exitosamente.', $productos);
+        $productos = $this->productoModel->obtenerProductosPorIDSubcategoria($subcategoria, $pagina, $por_pagina);
+        foreach ($productos as &$producto) {
+            $this->enriquecerProductoConPromocion($producto);
+        }
+
+        return $this->respuestaPaginada($productos, $total, $pagina, $por_pagina, 'Productos de la subcategoría recuperados exitosamente.');
     }
     /**
      * Obtiene la lista de todos los productos de un vendedor.
@@ -240,34 +217,23 @@ class ProductoService
      * @param int $categoria El nombre de la categoria.
      * @return array
      */
-    public function getlistaProductosPorCategoria($categoria): array
+    public function obtenerProductosPorCategoria($categoria, int $pagina = 1, int $por_pagina = 10): array
     {
         if (!$categoria) {
             return ResponseHelper::error('No se encontró suficientes datos.', 404);
         }
 
-        $productos = $this->productoModel->getProductosPorNombreCategoria($categoria);
-        foreach ($productos as &$producto) {
-            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
-            if ($vinculacion) {
-                $producto['precio_promocional'] = $vinculacion['precio_promocional'];
-                $producto['evento_asociado'] = [
-                    'id_evento' => $vinculacion['id_evento'],
-                    'nombre_evento' => $vinculacion['nombre_evento'],
-                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
-                    'valor_descuento' => $vinculacion['valor_descuento'],
-                    'condiciones' => $vinculacion['condiciones'],
-                    'fecha_inicio' => $vinculacion['fecha_inicio'],
-                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
-                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
-                ];
-            } else {
-                $producto['precio_promocional'] = null;
-                $producto['evento_asociado'] = null;
-            }
+        $total = $this->productoModel->contarProductosPorIDCategoria($categoria);
+        if ($total === 0) {
+            return $this->respuestaPaginada([], 0, $pagina, $por_pagina);
         }
 
-        return ResponseHelper::success('Productos de la categoria recuperados exitosamente.', $productos);
+        $productos = $this->productoModel->obtenerProductosPorIDCategoria($categoria, $pagina, $por_pagina);
+        foreach ($productos as &$producto) {
+            $this->enriquecerProductoConPromocion($producto);
+        }
+
+        return $this->respuestaPaginada($productos, $total, $pagina, $por_pagina, 'Productos de la categoría recuperados exitosamente.');
     }
     /**
      * Obtiene la lista de todos los productos de un vendedor.
@@ -275,34 +241,24 @@ class ProductoService
      * @param int $nombre El nombre parcial del producto
      * @return array
      */
-    public function getlistaProductosPorNombre($nombre): array
+    public function obtenerProductosPorNombre($nombre, int $pagina = 1, int $por_pagina = 10): array
     {
         if (!$nombre) {
             return ResponseHelper::error('No se encontró productos.', 404);
         }
         $palabras = preg_split('/\s+/', strtolower(trim($nombre)));
-        $resultados = $this->productoModel->buscarProductosPorPalabras($palabras);
-        foreach ($resultados as &$resultado) {
-            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($resultado['id_producto']);
-            if ($vinculacion) {
-                $resultado['precio_promocional'] = $vinculacion['precio_promocional'];
-                $resultado['evento_asociado'] = [
-                    'id_evento' => $vinculacion['id_evento'],
-                    'nombre_evento' => $vinculacion['nombre_evento'],
-                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
-                    'valor_descuento' => $vinculacion['valor_descuento'],
-                    'condiciones' => $vinculacion['condiciones'],
-                    'fecha_inicio' => $vinculacion['fecha_inicio'],
-                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
-                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
-                ];
-            } else {
-                $resultado['precio_promocional'] = null;
-                $resultado['evento_asociado'] = null;
-            }
+
+        $total = $this->productoModel->contarProductosPorPalabras($palabras);
+        if ($total === 0) {
+            return $this->respuestaPaginada([], 0, $pagina, $por_pagina);
         }
 
-        return ResponseHelper::success('Productos recuperados exitosamente.', $resultados);
+        $productos = $this->productoModel->buscarProductosPorPalabras($palabras, $pagina, $por_pagina);
+        foreach ($productos as &$producto) {
+            $this->enriquecerProductoConPromocion($producto);
+        }
+
+        return $this->respuestaPaginada($productos, $total, $pagina, $por_pagina, 'Productos recuperados exitosamente.');
     }
     /**
      * Busca productos por los filtros proporcionados.
@@ -310,30 +266,29 @@ class ProductoService
      * @param array $filtros Los filtros de búsqueda.
      * @return array
      */
-    public function buscarProductos(array $filtros): array
+    public function buscarProductos(array $filtros, int $pagina = 1, int $por_pagina = 10): array
     {
-        $productos = $this->productoModel->buscarProductosPorFiltros($filtros);
-        foreach ($productos as &$producto) {
-            $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
-            if ($vinculacion) {
-                $producto['precio_promocional'] = $vinculacion['precio_promocional'];
-                $producto['evento_asociado'] = [
-                    'id_evento' => $vinculacion['id_evento'],
-                    'nombre_evento' => $vinculacion['nombre_evento'],
-                    'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
-                    'valor_descuento' => $vinculacion['valor_descuento'],
-                    'condiciones' => $vinculacion['condiciones'],
-                    'fecha_inicio' => $vinculacion['fecha_inicio'],
-                    'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
-                    'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
-                ];
-            } else {
-                $producto['precio_promocional'] = null;
-                $producto['evento_asociado'] = null;
-            }
+        $total = $this->productoModel->contarProductosPorFiltros($filtros);
+        if ($total === 0) {
+            return $this->respuestaPaginada([], 0, $pagina, $por_pagina, 'No se encontraron productos.');
         }
 
-        return ResponseHelper::success('Productos encontrados.', $productos);
+        $productos = $this->productoModel->buscarProductosPorFiltros($filtros, $pagina, $por_pagina);
+        foreach ($productos as &$producto) {
+            $this->enriquecerProductoConPromocion($producto);
+        }
+
+        return $this->respuestaPaginada($productos, $total, $pagina, $por_pagina, 'Productos encontrados.');
+    }
+    /**
+     * Obtiene la lista de los productos destacados.
+     *
+     * @return array
+     */
+    public function obtenerProductosDestacados(): array
+    {
+        $productos = $this->productoModel->productosMasDestacados();
+        return ResponseHelper::success('Productos Destacados.', $productos);
     }
     /**
      * Actualiza un campo específico de un producto.
@@ -371,5 +326,80 @@ class ProductoService
         } else {
             return ResponseHelper::error("Error al actualizar el campo '{$campo}'.", 500);
         }
+    }
+    /**
+     * Obtiene los indicadores de calificacion de un producto.
+     *
+     * @return array
+     */
+    public function obtenerCalificacionDeProducto($idProducto): array
+    {
+        $calificacion = $this->productoModel->obtenerCalificacionPorIDProducto($idProducto);
+        return ResponseHelper::success('Calificacion del Producto.', $calificacion);
+    }
+    /**
+     * Obtiene las marcas mas usadas de un producto.
+     *
+     * @return array
+     */
+    public function obtenerMarcasMasUsadas(array $filtros): array
+    {
+        $marcas = $this->productoModel->obtenerMarcasMasUsadas($filtros);
+        return ResponseHelper::success('Marcas del Producto.', $marcas);
+    }
+
+    private function enriquecerProductoConPromocion(array &$producto): void
+    {
+        $vinculacion = $this->productoEventoModel->obtenerVinculacionActivaPorProducto($producto['id_producto']);
+        if ($vinculacion) {
+            $producto['precio_promocional'] = $vinculacion['precio_promocional'];
+            $producto['evento_asociado'] = [
+                'id_evento' => $vinculacion['id_evento'],
+                'nombre_evento' => $vinculacion['nombre_evento'],
+                'tipo_aplicacion' => $vinculacion['tipo_aplicacion'],
+                'valor_descuento' => $vinculacion['valor_descuento'],
+                'condiciones' => $vinculacion['condiciones'],
+                'fecha_inicio' => $vinculacion['fecha_inicio'],
+                'fecha_vencimiento' => $vinculacion['fecha_vencimiento'],
+                'fecha_vinculacion' => $vinculacion['fecha_vinculacion']
+            ];
+        } else {
+            $producto['precio_promocional'] = null;
+            $producto['evento_asociado'] = null;
+        }
+    }
+    /**
+     * Valida los datos de un producto.
+     *
+     * @param array $data Datos del producto.
+     * @param int|null $idProducto ID si es una actualización (para excluir en unicidad).
+     * @return array Lista de errores.
+     */
+    public function validarDatosProducto(array $data, ?int $idProducto = null): array
+    {
+        // Reglas base
+        $reglas = [
+            'nombre' => ['requerido', 'min_len:3', 'max_len:255'],
+            'descripcion' => ['min_len:10'], // opcional, pero si existe, mínimo 10
+            'marca' => ['requerido', 'min_len:2', 'max_len:100'],
+            'precio' => ['requerido', 'numeric', 'positive'],
+            'stock' => ['requerido', 'integer', 'non_negative'],
+            'sku' => ['requerido', 'min_len:3', 'max_len:50', 'regex:/^[a-zA-Z0-9_-]+$/'],
+            'estado_producto' => ['requerido', 'in:nuevo,usado,reacondicionado']
+        ];
+
+        $errores = Validator::validarCampos($data, $reglas);
+        return $errores;
+    }
+    private function respuestaPaginada(array $productos, int $total, int $pagina, int $por_pagina, string $mensaje = 'Operación exitosa.'): array
+    {
+        $totalPaginas = $por_pagina > 0 ? ceil($total / $por_pagina) : 0;
+        return ResponseHelper::success($mensaje, [
+            'productos' => $productos,
+            'total' => $total,
+            'pagina' => $pagina,
+            'por_pagina' => $por_pagina,
+            'total_paginas' => $totalPaginas
+        ]);
     }
 }

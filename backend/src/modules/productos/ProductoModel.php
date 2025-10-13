@@ -22,7 +22,8 @@ class ProductoModel
     public function registrarProducto(array $data, $idVendedor): int|false
     {
         try {
-            $stmt = $this->db->prepare("INSERT INTO producto (id_subcategoria, id_vendedor, nombre, descripcion, marca, precio, stock, sku,estado_producto, fecha_publicacion) VALUES (?, ?, ?, ?, ?, ?, ?,?,?, NOW())");
+            $stmt = $this->db->prepare("INSERT INTO producto (id_subcategoria, id_vendedor, nombre, descripcion, marca, precio, stock, sku,estado_producto, color, modelo, peso, dimensiones, fecha_publicacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            ");
             $stmt->execute([
                 $data['id_subcategoria'],
                 $idVendedor,
@@ -32,7 +33,11 @@ class ProductoModel
                 $data['precio'],
                 $data['stock'],
                 $data['sku'],
-                $data['estado_producto']
+                $data['estado_producto'],
+                $data['color'] ?? null,
+                $data['modelo'] ?? null,
+                $data['peso'] ?? null,
+                $data['dimensiones'] ?? null
             ]);
 
             return $this->db->lastInsertId();
@@ -44,7 +49,11 @@ class ProductoModel
     public function actualizarProducto(int $productId, array $data): bool
     {
         try {
-            $sql = "UPDATE producto SET nombre = ?, descripcion = ?, marca = ?, precio = ?, stock = ?, estado_producto = ?, id_subcategoria = ?, sku = ? WHERE id_producto = ?";
+            $sql = "UPDATE producto SET nombre = ?, descripcion = ?, marca = ?, precio = ?, stock = ?, 
+            estado_producto = ?, id_subcategoria = ?, sku = ?,
+            color = ?, modelo = ?, peso = ?, dimensiones = ?
+            WHERE id_producto = ?";
+
             $stmt = $this->db->prepare($sql);
             return $stmt->execute([
                 $data['nombre'],
@@ -55,6 +64,10 @@ class ProductoModel
                 $data['estado_producto'],
                 $data['id_subcategoria'],
                 $data['sku'],
+                $data['color'] ?? null,
+                $data['modelo'] ?? null,
+                $data['peso'] ?? null,
+                $data['dimensiones'] ?? null,
                 $productId
             ]);
         } catch (\PDOException $e) {
@@ -165,7 +178,7 @@ class ProductoModel
     public function recuperarProducto(int $idProducto): array|false
     {
         try {
-            $sql = "SELECT id_producto, id_vendedor, nombre, descripcion, marca, precio, stock, estado_producto, id_imagen_principal, id_vendedor FROM producto WHERE id_producto = ?";
+            $sql = "SELECT * FROM producto WHERE id_producto = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idProducto]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -181,7 +194,7 @@ class ProductoModel
      * @param int $productId El ID del producto.
      * @return array Un array de objetos con el id_imagen y la ruta.
      */
-    public function getImagenes(int $productId): array
+    public function obtenerImagenes(int $productId): array
     {
         try {
             $sql = "SELECT id_imagen, ruta FROM imagen WHERE id_producto = ?";
@@ -193,96 +206,36 @@ class ProductoModel
             return [];
         }
     }
-    /**
-     * Recupera el nombre de la empresa usando el ID del usuario.
-     *
-     * @param int $idUsuario El ID del usuario.
-     * @return int|false El nombre de la empresa o false si no se encuentra.
-     */
-    public function getRazonSocialPorIdUsuario($idUsuario): string|false
-    {
-        try {
-            $sql = "SELECT razon_social FROM vendedor WHERE id_usuario = ?";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([$idUsuario]);
-            $result = $stmt->fetchColumn();
 
-            if ($result === false) {
-                error_log("Debug - No se encontró razon social del vendedor para id_usuario: " . $idUsuario);
-            }
-
-            return $result; // Puede ser string o false
-        } catch (\PDOException $e) {
-            error_log("Error al recuperar razon social del vendedor por ID de usuario: " . $e->getMessage());
-            return false;
-        }
-    }
-    /**
-     * Recupera la lista de productos propios de un vendedor, ordenados por subcategoría.
-     *
-     * @param int $idVendedor El ID del vendedor.
-     * @return array La lista de productos.
-     */
-    public function getMisProductosPorIdVendedor(int $idVendedor): array
-    {
-        try {
-            $sql = "SELECT 
-                        p.id_producto,
-                        p.nombre,
-                        p.descripcion,
-                        p.marca,
-                        p.precio,
-                        p.stock,
-                        p.sku,
-                        p.estado_producto,
-                        p.estado,
-                        s.nombre AS nombre_subcategoria,
-                        i.ruta AS imagen_principal_ruta
-                    FROM producto p
-                    JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
-                    LEFT JOIN imagen i ON p.id_imagen_principal = i.id_imagen
-                    WHERE p.id_vendedor = ?
-                    ORDER BY s.nombre";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([$idVendedor]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (\PDOException $e) {
-            error_log("Error al obtener la lista de tus productos: " . $e->getMessage());
-            return [];
-        }
-    }
     /**
      * Recupera la lista de productos de un vendedor publica, ordenados por subcategoría.
      *
      * @param int $idVendedor El ID del vendedor.
      * @return array La lista de productos.
      */
-    public function getProductosPorIdVendedor(int $idVendedor): array
+    public function obtenerProductosPorIdVendedor(int $idVendedor, int $pagina = 1, int $por_pagina = 10): array
     {
         try {
+            $offset = ($pagina - 1) * $por_pagina;
             $sql = "SELECT 
-                        p.id_producto,
-                        p.id_vendedor,
-                        p.nombre,
-                        p.descripcion,
-                        p.marca,
-                        p.precio,
-                        p.stock,
-                        p.estado_producto,
-                        s.nombre AS nombre_subcategoria,
-                        i.ruta AS imagen_principal_ruta
-                    FROM producto p
-                    JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
-                    LEFT JOIN imagen i ON p.id_imagen_principal = i.id_imagen
-                    WHERE p.id_vendedor = ? AND p.estado like 'activo'
-                    ORDER BY s.nombre";
+                    p.*,
+                    s.nombre AS nombre_subcategoria,
+                    i.ruta AS imagen_principal_ruta
+                FROM producto p
+                JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
+                LEFT JOIN imagen i ON p.id_imagen_principal = i.id_imagen
+                WHERE p.id_vendedor = ? AND p.estado = 'activo'
+                ORDER BY p.id_producto
+                LIMIT ? OFFSET ?";
 
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([$idVendedor]);
+            $stmt->bindValue(1, $idVendedor, PDO::PARAM_INT);
+            $stmt->bindValue(2, $por_pagina, PDO::PARAM_INT);
+            $stmt->bindValue(3, $offset, PDO::PARAM_INT);
+            $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
-            error_log("Error al obtener la lista de productos: " . $e->getMessage());
+            error_log("Error al obtener productos por vendedor con paginación: " . $e->getMessage());
             return [];
         }
     }
@@ -290,12 +243,13 @@ class ProductoModel
      * Recupera la lista de productos de una subcategoria, 
      * ordenados por fecha de publicacion dec.
      *
-     * @param string $subcategoria El nombre de la subcategoria.
+     * @param string $subcategoria El id de la subcategoria.
      * @return array La lista de productos.
      */
-    public function getProductosPorNombreSubcategoria(string $nombreSubcategoria): array
+    public function obtenerProductosPorIDSubcategoria(string $idSubcategoria, int $pagina = 1, int $por_pagina = 10): array
     {
         try {
+            $offset = ($pagina - 1) * $por_pagina;
             $sql = "SELECT 
                     p.id_producto,
                     p.id_vendedor,
@@ -306,19 +260,25 @@ class ProductoModel
                     p.stock,
                     p.estado_producto,
                     p.fecha_publicacion,
+                    p.promedio_calificacion,
+                    p.total_opiniones,
                     s.nombre AS nombre_subcategoria,
                     i.ruta AS imagen_principal_ruta
                 FROM producto p
                 JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
                 LEFT JOIN imagen i ON p.id_imagen_principal = i.id_imagen
-                WHERE s.nombre = ? AND p.estado = 'activo'
-                ORDER BY p.fecha_publicacion DESC";
+                WHERE s.id_subcategoria = ? AND p.estado = 'activo'
+                ORDER BY p.fecha_publicacion DESC
+                LIMIT ? OFFSET ?";
 
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([$nombreSubcategoria]);
+            $stmt->bindValue(1, $idSubcategoria, PDO::PARAM_STR);
+            $stmt->bindValue(2, $por_pagina, PDO::PARAM_INT);
+            $stmt->bindValue(3, $offset, PDO::PARAM_INT);
+            $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
-            error_log("Error al obtener productos por nombre de subcategoría: " . $e->getMessage());
+            error_log("Error al obtener productos por subcategoría con paginación: " . $e->getMessage());
             return [];
         }
     }
@@ -326,12 +286,13 @@ class ProductoModel
      * Recupera la lista de productos de una categoria, 
      * ordenados por fecha de publicacion dec.
      *
-     * @param string $categoria El nombre de la categoria.
+     * @param string $categoria El id de la categoria.
      * @return array La lista de productos.
      */
-    public function getProductosPorNombreCategoria(string $nombreCategoria): array
+    public function obtenerProductosPorIDCategoria(string $idCategoria, int $pagina = 1, int $por_pagina = 10): array
     {
         try {
+            $offset = ($pagina - 1) * $por_pagina;
             $sql = "SELECT 
                     p.id_producto,
                     p.id_vendedor,
@@ -342,6 +303,8 @@ class ProductoModel
                     p.stock,
                     p.estado_producto,
                     p.fecha_publicacion,
+                    p.promedio_calificacion,
+                    p.total_opiniones,
                     s.nombre AS nombre_subcategoria,
                     c.nombre AS nombre_categoria,
                     i.ruta AS imagen_principal_ruta
@@ -349,14 +312,18 @@ class ProductoModel
                 JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
                 JOIN categoria c ON s.id_categoria = c.id_categoria
                 LEFT JOIN imagen i ON p.id_imagen_principal = i.id_imagen
-                WHERE c.nombre = ? AND p.estado = 'activo'
-                ORDER BY p.fecha_publicacion DESC, s.nombre ASC";
+                WHERE c.id_categoria = ? AND p.estado = 'activo'
+                ORDER BY p.fecha_publicacion DESC, s.nombre ASC
+                LIMIT ? OFFSET ?";
 
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([$nombreCategoria]);
+            $stmt->bindValue(1, $idCategoria, PDO::PARAM_STR);
+            $stmt->bindValue(2, $por_pagina, PDO::PARAM_INT);
+            $stmt->bindValue(3, $offset, PDO::PARAM_INT);
+            $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
-            error_log("Error al obtener productos por nombre por categoría: " . $e->getMessage());
+            error_log("Error al obtener productos por categoría con paginación: " . $e->getMessage());
             return [];
         }
     }
@@ -368,9 +335,10 @@ class ProductoModel
      * @param array $palabras Las palabras que ingrese al buscador.
      * @return array La lista de productos.
      */
-    public function buscarProductosPorPalabras(array $palabras): array
+    public function buscarProductosPorPalabras(array $palabras, int $pagina = 1, int $por_pagina = 10): array
     {
         try {
+            $offset = ($pagina - 1) * $por_pagina;
             $sql = "SELECT 
                     p.id_producto,
                     p.nombre,
@@ -379,6 +347,8 @@ class ProductoModel
                     p.precio,
                     p.estado_producto,
                     p.fecha_publicacion,
+                    p.promedio_calificacion,
+                    p.total_opiniones,
                     s.nombre AS nombre_subcategoria,
                     i.ruta AS imagen_principal_ruta
                 FROM producto p
@@ -387,7 +357,7 @@ class ProductoModel
                 WHERE p.estado = 'activo'";
 
             $params = [];
-            foreach ($palabras as $index => $palabra) {
+            foreach ($palabras as $palabra) {
                 $sql .= " AND (
                         LOWER(p.nombre) LIKE ? OR
                         LOWER(p.descripcion) LIKE ? OR
@@ -398,88 +368,93 @@ class ProductoModel
                 $params[] = '%' . $palabra . '%';
             }
 
-            $sql .= " ORDER BY p.fecha_publicacion DESC";
+            $sql .= " ORDER BY p.fecha_publicacion DESC LIMIT ? OFFSET ?";
+            $params[] = $por_pagina;
+            $params[] = $offset;
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
-            error_log("Error en búsqueda por palabras clave: " . $e->getMessage());
+            error_log("Error en búsqueda por palabras con paginación: " . $e->getMessage());
             return [];
         }
     }
-    /**
-     * Recupera la lista de productos mas destacados, ordenados por calificacion.
-     *
-     * @return array La lista de productos.
-     */
-    public function productosMasDestacados(): array
-    {
-        try {
-            $sql = "SELECT 
-                    p.id_producto,
-                    p.nombre,
-                    p.descripcion,
-                    p.precio,
-                    p.estado_producto,
-                    AVG(r.calificacion) AS promedio_calificacion,
-                    COUNT(r.id_resena) AS total_resenas
-                    FROM productos p
-                    JOIN resena r ON p.id_producto = r.id_producto
-                    GROUP BY p.id_producto, p.nombre, p.descripcion, p.precio
-                    HAVING COUNT(r.id_resena) >= 2
-                    ORDER BY promedio_calificacion DESC
-                    LIMIT 10";
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (\PDOException $e) {
-            error_log("Error al obtener productos destacados: " . $e->getMessage());
-            return [];
-        }
-    }
     /**
      * Busca productos en la base de datos usando filtros dinámicos.
      *
      * @param array $filtros Los filtros de búsqueda.
      * @return array La lista de productos encontrados.
      */
-    public function buscarProductosPorFiltros(array $filtros): array
+    public function buscarProductosPorFiltros(array $filtros, int $pagina = 1, int $por_pagina = 10): array
     {
         try {
+            $offset = ($pagina - 1) * $por_pagina;
             $sql = "SELECT 
-                        p.id_producto,
-                        p.nombre,
-                        p.descripcion,
-                        p.marca,
-                        p.precio,
-                        p.estado,
-                        s.nombre AS nombre_subcategoria,
-                        i.ruta AS imagen_principal_ruta
-                    FROM producto p
-                    JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
-                    LEFT JOIN imagen i ON p.id_imagen_principal = i.id_imagen
-                    WHERE p.estado = 'activo'";
+                p.id_producto,
+                p.id_vendedor,
+                p.nombre,
+                p.descripcion,
+                p.marca,
+                p.precio,
+                p.stock,
+                p.estado_producto,
+                p.fecha_publicacion,
+                p.promedio_calificacion,
+                p.total_opiniones,
+                s.nombre AS nombre_subcategoria,
+                c.nombre AS nombre_categoria,
+                i.ruta AS imagen_principal_ruta
+        FROM producto p
+        JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
+        JOIN categoria c ON s.id_categoria = c.id_categoria
+        LEFT JOIN imagen i ON p.id_imagen_principal = i.id_imagen
+         WHERE p.estado IN ('activo','agotado')";
 
             $params = [];
 
-            // Construir la cláusula WHERE dinámicamente
-            if (!empty($filtros['buscarTerm'])) {
+            // 1. Búsqueda por término simple (q=...)
+            if (!empty($filtros['terminoBusqueda'])) {
                 $sql .= " AND (p.nombre LIKE ? OR p.descripcion LIKE ?)";
-                $buscarTerm = "%{$filtros['buscarTerm']}%";
-                $params[] = $buscarTerm;
-                $params[] = $buscarTerm;
+                $termino = "%{$filtros['terminoBusqueda']}%";
+                $params[] = $termino;
+                $params[] = $termino;
             }
 
+            // 2. Búsqueda por palabras múltiples (palabras=[...])
+            if (!empty($filtros['palabras']) && is_array($filtros['palabras'])) {
+                foreach ($filtros['palabras'] as $palabra) {
+                    $palabra = trim($palabra);
+                    if ($palabra !== '') {
+                        $sql .= " AND (
+                        LOWER(p.nombre) LIKE ? OR
+                        LOWER(p.descripcion) LIKE ? OR
+                        LOWER(p.marca) LIKE ?
+                    )";
+                        $like = '%' . strtolower($palabra) . '%';
+                        $params[] = $like;
+                        $params[] = $like;
+                        $params[] = $like;
+                    }
+                }
+            }
+
+            // Resto de filtros (categoría, marca, precio, etc.)
             if (!empty($filtros['id_subcategoria'])) {
                 $sql .= " AND p.id_subcategoria = ?";
                 $params[] = $filtros['id_subcategoria'];
             }
 
+            if (!empty($filtros['id_categoria'])) {
+                $sql .= " AND s.id_categoria = ?";
+                $params[] = $filtros['id_categoria'];
+            }
+
             if (!empty($filtros['marca'])) {
-                $sql .= " AND p.marca = ?";
-                $params[] = $filtros['marca'];
+                $placeholders = implode(',', array_fill(0, count($filtros['marca']), '?'));
+                $sql .= " AND p.marca IN ($placeholders)";
+                $params = array_merge($params, $filtros['marca']);
             }
 
             if (isset($filtros['precio_min']) && is_numeric($filtros['precio_min'])) {
@@ -492,15 +467,48 @@ class ProductoModel
                 $params[] = $filtros['precio_max'];
             }
 
+            if (isset($filtros['calificacion_min']) && is_numeric($filtros['calificacion_min'])) {
+                $sql .= " AND p.promedio_calificacion >= ?";
+                $params[] = $filtros['calificacion_min'];
+            }
+
+            if (!empty($filtros['estado_producto'])) {
+                $sql .= " AND p.estado_producto = ?";
+                $params[] = $filtros['estado_producto'];
+            }
+
+            if (isset($filtros['disponible']) && $filtros['disponible'] === true) {
+                $sql .= " AND p.stock > 0";
+            }
+            // Filtro: productos en oferta (vinculados a un evento activo y vigente)
+            if (!empty($filtros['en_oferta']) && $filtros['en_oferta'] === true) {
+                $sql .= " AND EXISTS (
+                            SELECT 1
+                            FROM producto_evento pe
+                            INNER JOIN evento e ON pe.id_evento = e.id_evento
+                            WHERE pe.id_producto = p.id_producto
+                            AND pe.estado_vinculacion = 'activo'
+                            AND e.estado = 'activo'
+                            AND e.fecha_inicio IS NOT NULL
+                            AND e.fecha_vencimiento IS NOT NULL
+                            AND e.fecha_inicio <= CURDATE()
+                            AND e.fecha_vencimiento >= CURDATE()
+                        )";
+            }
+
+            $sql .= " ORDER BY p.fecha_publicacion DESC LIMIT ? OFFSET ?";
+            $params[] = $por_pagina;
+            $params[] = $offset;
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute($params);
-
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
-            error_log("Error al buscar productos por filtros: " . $e->getMessage());
+            error_log("Error al buscar productos por filtros con paginación: " . $e->getMessage());
             return [];
         }
     }
+
     /**
      * Actualiza un campo específico de un producto.
      *
@@ -527,5 +535,387 @@ class ProductoModel
             return false;
         }
     }
-    
+    /**
+     * Actualiza promedio_calificacion y total_opiniones de un producto.
+     */
+    public function actualizarEstadisticasProducto(int $idProducto): bool
+    {
+        try {
+            $sql = "
+            UPDATE producto p
+            SET 
+                total_opiniones = (
+                    SELECT COUNT(*) 
+                    FROM review r 
+                    WHERE r.id_producto = p.id_producto
+                ),
+                promedio_calificacion = (
+                    SELECT COALESCE(AVG(r.calificacion), 0) 
+                    FROM review r 
+                    WHERE r.id_producto = p.id_producto
+                )
+            WHERE p.id_producto = ?
+        ";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([$idProducto]);
+        } catch (\PDOException $e) {
+            error_log("Error al actualizar estadísticas del producto: " . $e->getMessage());
+            return false;
+        }
+    }
+    /**
+     * Recupera la lista de productos más destacados, ordenados por calificación.
+     *
+     * @return array La lista de productos.
+     */
+    public function productosMasDestacados(): array
+    {
+        try {
+            $sql = "SELECT 
+                        p.id_producto,
+                        p.nombre,
+                        p.descripcion,
+                        p.marca,
+                        p.precio,
+                        p.estado,
+                        p.fecha_publicacion,
+                        p.promedio_calificacion,
+                        p.total_opiniones,
+                        i.ruta AS imagen_principal_ruta
+                    FROM producto p
+                    LEFT JOIN imagen i ON p.id_imagen_principal = i.id_imagen
+                    WHERE p.total_opiniones > 0
+                  AND p.estado = 'activo'
+                ORDER BY p.promedio_calificacion DESC, p.total_opiniones DESC
+                LIMIT 10";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            error_log("Error al obtener productos destacados: " . $e->getMessage());
+            return [];
+        }
+    }
+    /**
+     * Recupera los campos indicadores de calificacion del producto
+     *
+     * @param string $idProducto
+     * @return array Los campos promedio y total de opiniones
+     */
+    public function obtenerCalificacionPorIDProducto($idProducto): array
+    {
+        try {
+            $sql = "SELECT 
+                    p.id_producto,
+                    p.promedio_calificacion,
+                    p.total_opiniones
+                FROM producto p
+                WHERE p.id_producto = ?";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idProducto]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            error_log("Error al obtener productos por nombre por categoría: " . $e->getMessage());
+            return [];
+        }
+    }
+    /**
+     * Obtiene las marcas más usadas en productos activos,
+     * filtradas opcionalmente por categoría o subcategoría.
+     *
+     * @param array $filtros Debe contener opcionalmente 'id_categoria' o 'id_subcategoria'
+     * @param int $limite Número máximo de marcas a devolver (por defecto 20)
+     * @return array Lista de marcas con su cantidad de productos
+     */
+    public function obtenerMarcasMasUsadas(array $filtros = [], int $limite = 10): array
+    {
+        try {
+            $limite = max(1, min($limite, 100));
+
+            $sql = "SELECT 
+                p.marca,
+                COUNT(*) AS cantidad
+            FROM producto p
+            JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
+            JOIN categoria c ON s.id_categoria = c.id_categoria
+            WHERE p.estado = 'activo'";
+
+            $params = [];
+
+            // ✅ 1. Búsqueda por término simple (q)
+            if (!empty($filtros['terminoBusqueda'])) {
+                $sql .= " AND (p.nombre LIKE ? OR p.descripcion LIKE ?)";
+                $termino = "%{$filtros['terminoBusqueda']}%";
+                $params[] = $termino;
+                $params[] = $termino;
+            }
+
+            // ✅ 2. Búsqueda por palabras múltiples
+            if (!empty($filtros['palabras']) && is_array($filtros['palabras'])) {
+                foreach ($filtros['palabras'] as $palabra) {
+                    $palabra = trim($palabra);
+                    if ($palabra !== '') {
+                        $sql .= " AND (
+                        LOWER(p.nombre) LIKE ? OR
+                        LOWER(p.descripcion) LIKE ? OR
+                        LOWER(p.marca) LIKE ?
+                    )";
+                        $like = '%' . strtolower($palabra) . '%';
+                        $params[] = $like;
+                        $params[] = $like;
+                        $params[] = $like;
+                    }
+                }
+            }
+
+            // ✅ 3. Filtros de categoría/subcategoría (si existen)
+            if (!empty($filtros['id_subcategoria'])) {
+                $sql .= " AND p.id_subcategoria = ?";
+                $params[] = $filtros['id_subcategoria'];
+            } elseif (!empty($filtros['id_categoria'])) {
+                $sql .= " AND s.id_categoria = ?";
+                $params[] = $filtros['id_categoria'];
+            }
+
+            // ✅ 4. Filtros adicionales (marca, precio, etc.)
+            if (!empty($filtros['marca'])) {
+                $placeholders = implode(',', array_fill(0, count($filtros['marca']), '?'));
+                $sql .= " AND p.marca IN ($placeholders)";
+                $params = array_merge($params, $filtros['marca']);
+            }
+
+            if (isset($filtros['precio_min']) && is_numeric($filtros['precio_min'])) {
+                $sql .= " AND p.precio >= ?";
+                $params[] = $filtros['precio_min'];
+            }
+
+            if (isset($filtros['precio_max']) && is_numeric($filtros['precio_max'])) {
+                $sql .= " AND p.precio <= ?";
+                $params[] = $filtros['precio_max'];
+            }
+
+            if (isset($filtros['calificacion_min']) && is_numeric($filtros['calificacion_min'])) {
+                $sql .= " AND p.promedio_calificacion >= ?";
+                $params[] = $filtros['calificacion_min'];
+            }
+
+            if (!empty($filtros['estado_producto'])) {
+                $sql .= " AND p.estado_producto = ?";
+                $params[] = $filtros['estado_producto'];
+            }
+
+            if (isset($filtros['disponible']) && $filtros['disponible'] === true) {
+                $sql .= " AND p.stock > 0";
+            }
+
+            $sql .= " 
+            GROUP BY p.marca
+            HAVING p.marca IS NOT NULL AND p.marca != ''
+            ORDER BY cantidad DESC
+            LIMIT ?";
+
+            $params[] = $limite;
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            error_log("Error al obtener marcas más usadas con filtros: " . $e->getMessage());
+            return [];
+        }
+    }
+    // Contar productos por vendedor
+    public function contarProductosPorIdVendedor(int $idVendedor): int
+    {
+        try {
+            $sql = "SELECT COUNT(*) 
+                FROM producto p 
+                WHERE p.id_vendedor = ? AND p.estado = 'activo'";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idVendedor]);
+            return (int) $stmt->fetchColumn();
+        } catch (\PDOException $e) {
+            error_log("Error al contar productos por vendedor: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    // Contar productos por subcategoría
+    public function contarProductosPorIDSubcategoria(string $idSubcategoria): int
+    {
+        try {
+            $sql = "SELECT COUNT(*) 
+                FROM producto p 
+                JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
+                WHERE s.id_subcategoria = ? AND p.estado = 'activo'";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idSubcategoria]);
+            return (int) $stmt->fetchColumn();
+        } catch (\PDOException $e) {
+            error_log("Error al contar productos por subcategoría: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    // Contar productos por categoría
+    public function contarProductosPorIDCategoria(string $idCategoria): int
+    {
+        try {
+            $sql = "SELECT COUNT(*) 
+                FROM producto p
+                JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
+                JOIN categoria c ON s.id_categoria = c.id_categoria
+                WHERE c.id_categoria = ? AND p.estado = 'activo'";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idCategoria]);
+            return (int) $stmt->fetchColumn();
+        } catch (\PDOException $e) {
+            error_log("Error al contar productos por categoría: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    // Contar productos por búsqueda de palabras
+    public function contarProductosPorPalabras(array $palabras): int
+    {
+        try {
+            $sql = "SELECT COUNT(*) 
+                FROM producto p
+                JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
+                WHERE p.estado = 'activo'";
+
+            $params = [];
+            foreach ($palabras as $palabra) {
+                $sql .= " AND (
+                        LOWER(p.nombre) LIKE ? OR
+                        LOWER(p.descripcion) LIKE ? OR
+                        LOWER(p.marca) LIKE ?
+                    )";
+                $params[] = '%' . $palabra . '%';
+                $params[] = '%' . $palabra . '%';
+                $params[] = '%' . $palabra . '%';
+            }
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return (int) $stmt->fetchColumn();
+        } catch (\PDOException $e) {
+            error_log("Error al contar productos por palabras: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    // Contar productos por filtros
+    public function contarProductosPorFiltros(array $filtros): int
+    {
+        try {
+            $sql = "SELECT COUNT(*) 
+                FROM producto p
+                JOIN subcategoria s ON p.id_subcategoria = s.id_subcategoria
+                WHERE p.estado IN ('activo','agotado')";
+
+            $params = [];
+
+            if (!empty($filtros['terminoBusqueda'])) {
+                $sql .= " AND (p.nombre LIKE ? OR p.descripcion LIKE ?)";
+                $terminoBusqueda = "%{$filtros['terminoBusqueda']}%";
+                $params[] = $terminoBusqueda;
+                $params[] = $terminoBusqueda;
+            }
+            // 2. Búsqueda por palabras múltiples (palabras=[...])
+            if (!empty($filtros['palabras']) && is_array($filtros['palabras'])) {
+                foreach ($filtros['palabras'] as $palabra) {
+                    $palabra = trim($palabra);
+                    if ($palabra !== '') {
+                        $sql .= " AND (
+                        LOWER(p.nombre) LIKE ? OR
+                        LOWER(p.descripcion) LIKE ? OR
+                        LOWER(p.marca) LIKE ?
+                    )";
+                        $like = '%' . strtolower($palabra) . '%';
+                        $params[] = $like;
+                        $params[] = $like;
+                        $params[] = $like;
+                    }
+                }
+            }
+
+            if (!empty($filtros['id_subcategoria'])) {
+                $sql .= " AND p.id_subcategoria = ?";
+                $params[] = $filtros['id_subcategoria'];
+            }
+
+            if (!empty($filtros['marca'])) {
+                if (is_array($filtros['marca'])) {
+                    $placeholders = implode(',', array_fill(0, count($filtros['marca']), '?'));
+                    $sql .= " AND p.marca IN ($placeholders)";
+                    foreach ($filtros['marca'] as $marca) {
+                        $params[] = $marca;
+                    }
+                } else {
+                    $sql .= " AND p.marca = ?";
+                    $params[] = $filtros['marca'];
+                }
+            }
+
+
+            if (isset($filtros['precio_min']) && is_numeric($filtros['precio_min'])) {
+                $sql .= " AND p.precio >= ?";
+                $params[] = $filtros['precio_min'];
+            }
+
+            if (isset($filtros['precio_max']) && is_numeric($filtros['precio_max'])) {
+                $sql .= " AND p.precio <= ?";
+                $params[] = $filtros['precio_max'];
+            }
+
+            if (!empty($filtros['id_categoria'])) {
+                $sql .= " AND s.id_categoria = ?";
+                $params[] = $filtros['id_categoria'];
+            }
+
+            if (isset($filtros['calificacion_min']) && is_numeric($filtros['calificacion_min'])) {
+                $sql .= " AND p.promedio_calificacion >= ?";
+                $params[] = $filtros['calificacion_min'];
+            }
+            if (isset($filtros['calificacion_min']) && is_numeric($filtros['calificacion_min'])) {
+                $sql .= " AND p.promedio_calificacion >= ?";
+                $params[] = $filtros['calificacion_min'];
+            }
+
+            // Filtro por estado_producto
+            if (!empty($filtros['estado_producto'])) {
+                $sql .= " AND p.estado_producto = ?";
+                $params[] = $filtros['estado_producto'];
+            }
+
+            // Filtro por disponibilidad
+            if (isset($filtros['disponible']) && $filtros['disponible'] === true) {
+                $sql .= " AND p.stock > 0";
+            }
+            if (!empty($filtros['en_oferta']) && $filtros['en_oferta'] === true) {
+                $sql .= " AND EXISTS (
+                            SELECT 1
+                            FROM producto_evento pe
+                            INNER JOIN evento e ON pe.id_evento = e.id_evento
+                            WHERE pe.id_producto = p.id_producto
+                            AND pe.estado_vinculacion = 'activo'
+                            AND e.estado = 'activo'
+                            AND e.fecha_inicio IS NOT NULL
+                            AND e.fecha_vencimiento IS NOT NULL
+                            AND e.fecha_inicio <= CURDATE()
+                            AND e.fecha_vencimiento >= CURDATE()
+                        )";
+            }
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return (int) $stmt->fetchColumn();
+        } catch (\PDOException $e) {
+            error_log("Error al contar productos por filtros: " . $e->getMessage());
+            return 0;
+        }
+    }
 }

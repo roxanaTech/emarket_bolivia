@@ -12,11 +12,13 @@ class ProductoController
 
     private $productoService;
     private $productoModel;
+    private $categoriaModel;
     private $imageService;
 
     public function __construct($db)
     {
         $this->productoModel = new ProductoModel($db);
+        $this->categoriaModel = new CategoriaModel($db);
         $this->productoService = new ProductoService($db);
         $this->imageService = new ImageService($this->productoModel);
     }
@@ -33,12 +35,16 @@ class ProductoController
         $idUsuario = $payload->sub;
 
         // Paso 1: Obtener el ID del vendedor a partir del ID del usuario
-        $idVendedor = $this->productoService->getVendedorIdPorIdUsuario($idUsuario);
+        $idVendedor = $this->productoService->obtenerVendedorIdPorIdUsuario($idUsuario);
         if (!$idVendedor) {
             return ResponseHelper::error('No se encontró un vendedor asociado a este usuario.', 404);
         }
         $mainImageIndex = 0;
-
+        // Validar datos
+        $errores = $this->productoService->validarDatosProducto($data);
+        if (!empty($errores)) {
+            return ResponseHelper::error('Datos inválidos', 400, $errores);
+        }
 
         // Paso 2: Insertar el producto en la base de datos para obtener su ID
         $idProducto = $this->productoModel->registrarProducto($data, $idVendedor);
@@ -80,7 +86,7 @@ class ProductoController
      * @param int $idProducto El ID del producto.
      * @return array Un array con la respuesta.
      */
-    public function getProducto($idProducto): array
+    public function obtenerProducto($idProducto): array
     {
         return $this->productoService->recuperarDatosProductoParaPublicacion($idProducto);
     }
@@ -103,7 +109,7 @@ class ProductoController
             return ResponseHelper::error('ID de producto no proporcionado.', 400, ['datos' => $data]);
         }
 
-        $idVendedor = $this->productoService->getVendedorIdPorIdUsuario($idUsuario);
+        $idVendedor = $this->productoService->obtenerVendedorIdPorIdUsuario($idUsuario);
         if (!$idVendedor) {
             return ResponseHelper::error('No autorizado. Solo el vendedor puede actualizar este producto.', 403);
         }
@@ -111,6 +117,10 @@ class ProductoController
         $productoExistente = $this->productoModel->recuperarProducto($idProducto);
         if (!$productoExistente || $productoExistente['id_vendedor'] != $idVendedor) {
             return ResponseHelper::error('Producto no encontrado o no pertenece a este vendedor.', 404);
+        }
+        $errores = $this->productoService->validarDatosProducto($data, $idProducto);
+        if (!empty($errores)) {
+            return ResponseHelper::error('Datos inválidos', 400, $errores);
         }
 
         // Paso 2: Actualizar los datos del producto
@@ -165,10 +175,12 @@ class ProductoController
      * @param $payload El ID del usuario autenticado.
      * @return array
      */
-    public function getListaProductosPropiosPorVendedor($payload): array
+    public function getListaProductosPropiosPorVendedor($payload, $pagina = 1, $por_pagina = 10): array
     {
         $idUsuario = $payload->sub;
-        return $this->productoService->getlistaMisProductos($idUsuario);
+        $pagina = max(1, (int)$pagina);
+        $por_pagina = max(1, min(100, (int)$por_pagina));
+        return $this->productoService->obtenerMisProductos($idUsuario, $pagina, $por_pagina);
     }
     /**
      * Recupera la lista de productos de un vendedor.
@@ -176,29 +188,36 @@ class ProductoController
      * @param $idVendedor El ID del vendedor autenticado.
      * @return array
      */
-    public function getListaProductosPorVendedor($idVendedor): array
+    public function getListaProductosPorVendedor($idVendedor, $pagina = 1, $por_pagina = 10): array
     {
-        return $this->productoService->getlistaProductosPorVendedor($idVendedor);
+        $pagina = max(1, (int)$pagina);
+        $por_pagina = max(1, min(100, (int)$por_pagina));
+        return $this->productoService->obtenerProductosPorVendedor((int)$idVendedor, $pagina, $por_pagina);
     }
     /**
      * Recupera la lista de productos de una subcategoria.
      *
-     * @param $subcategoria El nombre de la subcategoria.
+     * @param $subcategoria El id de la subcategoria.
      * @return array
      */
-    public function getListaProductosPorNombreSubcategoria($subcategoria): array
+    public function getListaProductosPorIDSubcategoria($subcategoria, $pagina = 1, $por_pagina = 10): array
     {
-        return $this->productoService->getlistaProductosPorSubcategoria($subcategoria);
+        $pagina = max(1, (int)$pagina);
+        $por_pagina = max(1, min(100, (int)$por_pagina));
+        return $this->productoService->obtenerProductosPorSubcategoria($subcategoria, $pagina, $por_pagina);
     }
+
     /**
      * Recupera la lista de productos de una categoria.
      *
-     * @param int $categoria El nombre de la categoria.
+     * @param int $categoria El id de la categoria.
      * @return array
      */
-    public function getListaProductosPorNombreCategoria($categoria): array
+    public function getListaProductosPorIDCategoria($categoria, $pagina = 1, $por_pagina = 10): array
     {
-        return $this->productoService->getlistaProductosPorCategoria($categoria);
+        $pagina = max(1, (int)$pagina);
+        $por_pagina = max(1, min(100, (int)$por_pagina));
+        return $this->productoService->obtenerProductosPorCategoria($categoria, $pagina, $por_pagina);
     }
     /**
      * Recupera la lista de productos por nombre parcial.
@@ -206,9 +225,11 @@ class ProductoController
      * @param int $nombreParcial El nombre parcial del producto.
      * @return array
      */
-    public function getListaProductosPorNombreParcial($nombreParcial): array
+    public function getListaProductosPorNombreParcial($nombreParcial, $pagina = 1, $por_pagina = 10): array
     {
-        return $this->productoService->getlistaProductosPorNombre($nombreParcial);
+        $pagina = max(1, (int)$pagina);
+        $por_pagina = max(1, min(100, (int)$por_pagina));
+        return $this->productoService->obtenerProductosPorNombre($nombreParcial, $pagina, $por_pagina);
     }
     /**
      * Recupera la lista de productos mas destacados.
@@ -217,7 +238,7 @@ class ProductoController
      */
     public function getListaProductosMasDestacados(): array
     {
-        return $this->productoModel->productosMasDestacados();
+        return $this->productoService->obtenerProductosDestacados();
     }
     /**
      * Busca productos por los filtros proporcionados en el body.
@@ -225,9 +246,22 @@ class ProductoController
      * @param array $data Los datos de la solicitud.
      * @return array
      */
-    public function buscarProductosPorFiltros(array $data): array
+    public function buscarProductosPorFiltros(array $data, $pagina = 1, $por_pagina = 10): array
     {
-        return $this->productoService->buscarProductos($data);
+        $pagina = max(1, (int)$pagina);
+        $por_pagina = max(1, min(100, (int)$por_pagina));
+
+        return $this->productoService->buscarProductos($data, $pagina, $por_pagina);
+    }
+    /**
+     * Busca marcas mas usadas de productos por los filtros proporcionados en el body.
+     *
+     * @param array $data Los datos de la solicitud.
+     * @return array
+     */
+    public function buscarMarcasProductos(array $data): array
+    {
+        return $this->productoService->obtenerMarcasMasUsadas($data);
     }
     /**
      * Actualiza un campo específico de un producto.
@@ -240,5 +274,41 @@ class ProductoController
     {
         $idUsuario = $payload->sub;
         return $this->productoService->actualizarCampoDeProducto($data, $idUsuario);
+    }
+    /**
+     * Obtiene la lista de todas las categorías.
+     *
+     * @return array Respuesta con las categorías.
+     */
+    public function listarCategorias(): array
+    {
+        $categorias = $this->categoriaModel->obtenerTodasCategorias();
+        return ResponseHelper::success('Categorías obtenidas.', $categorias);
+    }
+
+    /**
+     * Obtiene la lista de todas las subcategorías.
+     *
+     * @return array Respuesta con las subcategorías.
+     */
+    public function listarSubcategorias(): array
+    {
+        $subcategorias = $this->categoriaModel->obtenerTodasSubcategorias();
+        return ResponseHelper::success('Subcategorías obtenidas.', $subcategorias);
+    }
+
+    /**
+     * Obtiene la lista de categorías con sus subcategorías anidadas.
+     *
+     * @return array Respuesta con la estructura jerárquica.
+     */
+    public function listarCategoriasConSubcategorias(): array
+    {
+        $categoriasConSub = $this->categoriaModel->obtenerCategoriasConSubcategorias();
+        return ResponseHelper::success('Categorías y subcategorías obtenidas.', $categoriasConSub);
+    }
+    public function RecuperarCalificacionPorIDProducto($idProducto): array
+    {
+        return $this->productoService->obtenerCalificacionDeProducto($idProducto);
     }
 }
