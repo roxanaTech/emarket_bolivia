@@ -88,9 +88,15 @@ class VentaModel
      */
     public function listarVentasPorComprador($idComprador)
     {
-        $sql = "SELECT v.id_venta, v.fecha, v.total_venta, v.estado, v.tipo_pago, v.tipo_entrega,
+        $sql = "SELECT v.*,
+                       dv.*,
+                       i.ruta,
+                       p.nombre,
                        ven.razon_social AS nombre_vendedor
                 FROM venta v
+                JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+                JOIN producto p ON dv.id_producto = p.id_producto
+                JOIN imagen i ON p.id_imagen_principal= i.id_imagen
                 LEFT JOIN vendedor ven ON v.id_vendedor = ven.id_vendedor
                 WHERE v.id_comprador = :id_comprador
                 ORDER BY v.fecha DESC";

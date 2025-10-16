@@ -77,6 +77,7 @@
     <?php
     include 'navbar.php';
     ?>
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 hidden"></div>
     <div class="flex flex-col min-h-screen">
         <header class="relative bg-cover bg-center bg-no-repeat min-h-[55vh] sm:min-h-[60vh] md:min-h-[75vh] flex items-center justify-end pl-8 md:pl-16 pr-4"
             style="background-image: url('./img/Banner-oferta.png');">

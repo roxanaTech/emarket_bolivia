@@ -21,16 +21,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // 1. CONFIGURACIÓN INICIAL Y DATOS DEL PRODUCTO
     // ==================================================
     const contenedorPrincipal = document.getElementById('producto-detalle-principal');
-    const host = window.location.hostname;
-    const API_BASE = `http://${host}/emarket_bolivia/backend/public`;
     const API_URLS = {
         reviews: {
-            crear: `${API_BASE}/reviews/crear`,
-            producto: (id) => `${API_BASE}/reviews/producto/${id}`,
-            miResena: (idProducto) => `${API_BASE}/reviews/mi-resena/${idProducto}`,
-            gestion: (idReview) => `${API_BASE}/reviews/${idReview}`
+            crear: `${apiUrl}/reviews/crear`,
+            producto: (id) => `${apiUrl}/reviews/producto/${id}`,
+            miResena: (idProducto) => `${apiUrl}/reviews/mi-resena/${idProducto}`,
+            gestion: (idReview) => `${apiUrl}/reviews/${idReview}`
         },
-        calificacion: (id) => `${API_BASE}/productos/calificacion/${id}`
+        calificacion: (id) => `${apiUrl}/productos/calificacion/${id}`
     };
 
     // Obtener producto desde sessionStorage
@@ -114,13 +112,14 @@ document.addEventListener('DOMContentLoaded', function () {
         render() {
             const { producto } = this;
             const {
-                nombre, marca, precio, stock, estado_producto, razon_social, id_vendedor,
+                id_producto, nombre, marca, precio, stock, estado_producto, razon_social, id_vendedor,
                 rutas_imagenes, precio_promocional, evento_asociado, promedio_calificacion, total_opiniones
             } = producto;
+            console.log("idProducto", id_producto, nombre);
 
             // URLs de imágenes
             const imagenes = (rutas_imagenes && rutas_imagenes.length > 0)
-                ? rutas_imagenes.map(ruta => ruta.startsWith('http') ? ruta : `${API_BASE}/${ruta}`)
+                ? rutas_imagenes.map(ruta => ruta.startsWith('http') ? ruta : `${apiUrl}/${ruta}`)
                 : ['https://via.placeholder.com/600x600?text=Sin+imagen'];
 
             // Promoción
@@ -216,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div>
                             <h3 class="text-sm font-semibold mb-2 text-black">
                                 Vendido por:
-                                <a href="productos-vendedor.php?vendedor_id=${id_vendedor}" class="text-primary font-bold no-underline hover:underline ">
+                                <a href="perfil_vendedor.php?vendedor=${id_vendedor}" class="text-primary font-bold no-underline hover:underline ">
                                     ${razon_social}
                                 </a>
                             </h3>
@@ -227,12 +226,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                     <div class="flex flex-col sm:flex-row gap-4 pt-4">
                         <div class="flex items-center border border-secondary rounded">
-                            <button id="btn-decrease" class="px-3 py-2 text-content-subtle hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-black border-2 border-gray-200" ${stock < 1 ? 'disabled' : ''}>-</button>
+                           <button id="btn-decrease" class="px-3 py-2 text-content-subtle hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-black border-2 border-gray-200" ${stock < 1 ? 'disabled' : ''}>-</button>
                             <input id="product-quantity" class="w-12 text-center border-x border-y-0 border-secondary focus:ring-0 focus:border-x-primary disabled:bg-secondary text-black"
                                 type="text" value="1" min="1" max="${stock}" ${stock < 1 ? 'disabled' : ''}/>
                             <button id="btn-increase" class="px-3 py-2 text-content-subtle hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-gray-200" ${stock < 1 ? 'disabled' : ''}>+</button>
                         </div>
-                        <button class="w-full flex-1 text-white font-bold py-3 px-6 rounded-lg hover:bg-primary/90 transition-transform transform hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed fondo-azul" ${stock < 1 ? 'disabled' : ''}>
+                        <button class="w-full flex-1 text-white font-bold py-3 px-6 rounded-lg hover:bg-primary/90 transition-transform transform hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed fondo-azul add-to-cart-btn" ${stock < 1 ? 'disabled' : ''} data-product-id="${id_producto}">
                             <span class="material-symbols-outlined">add_shopping_cart</span>
                             <span>Añadir al Carrito</span>
                         </button>
@@ -242,6 +241,29 @@ document.addEventListener('DOMContentLoaded', function () {
                     </button>
                 </div>
             `;
+            const btnDecrease = contenedorPrincipal.querySelector('#btn-decrease');
+            const inputQuantity = contenedorPrincipal.querySelector('#product-quantity');
+            const btnIncrease = contenedorPrincipal.querySelector('#btn-increase');
+            const btnAddToCart = contenedorPrincipal.querySelector('.add-to-cart-btn');
+            if (btnAddToCart) {
+                btnAddToCart.addEventListener('click', async () => {
+                    const cantidad = parseInt(inputQuantity.value) || 1;
+                    const idProducto = parseInt(btnAddToCart.dataset.productId);  // Obtenemos del data-attribute
+
+                    if (!idProducto) {
+                        console.error('ID de producto no encontrado');
+                        return;
+                    }
+
+                    // Llamar a la función
+                    await agregarAlCarrito(idProducto, cantidad);
+
+                    // Opcional: Deshabilitar botón temporalmente para evitar clics múltiples
+                    btnAddToCart.disabled = true;
+                    setTimeout(() => { btnAddToCart.disabled = false; }, 2000);
+                });
+            }
+
         }
 
         bindEvents() {

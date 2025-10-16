@@ -1,8 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // --- Configuración Global ---
-    const host = window.location.hostname;
-    const apiUrl = `http://${host}/emarket_bolivia/backend/public`;
-
     // --- Elementos del DOM ---
     // ESTA VARIABLE APUNTA A 'productos-destacados'
     const productosContainer = document.getElementById('productos-destacados');

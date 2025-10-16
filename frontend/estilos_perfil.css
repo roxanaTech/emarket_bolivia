@@ -1,0 +1,175 @@
+body {
+            background-color: #f9f9f9;
+        }
+
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+            --bolivia-blue: #02187D;
+            --bolivia-red: #D52B1E;
+            --bolivia-yellow: #F9E300;
+        }
+
+        .header-banner {
+            background: url('banner.jpg') no-repeat center;
+            background-size: cover;
+            height: 200px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .company-info,
+        .contact-card,
+        .location-card,
+        .sidebar-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Botones con paleta */
+        .btn-primary-custom {
+            background-color: #F40009;
+            color: #fff;
+            border: none;
+        }
+
+        .btn-primary-custom:hover {
+            background-color: #c70007;
+        }
+
+        .btn-success-custom {
+            background-color: #1DB954;
+            color: #fff;
+            border: none;
+        }
+
+        .btn-success-custom:hover {
+            background-color: #18a148;
+        }
+
+        .btn-warning-custom {
+            background-color: #FEBD69;
+            color: #000;
+            border: none;
+        }
+
+        .btn-warning-custom:hover {
+            background-color: #e0a956;
+        }
+
+        /* Barra de navegación */
+        .barra {
+            background-color: #02187D;
+            width: 100%;
+        }
+
+        .barra .nav-link {
+            color: #fff !important;
+        }
+
+        .barra .nav-link.active {
+            background-color: #FEBD69 !important;
+            color: #02187D !important;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .barra .nav-link:hover {
+            color: #FEBD69 !important;
+        }
+
+        /* Buscador */
+        .tnh-searchbar {
+            flex-grow: 1;
+            max-width: 500px;
+        }
+
+        /* Iconos funcionales */
+        .functional .bi {
+            cursor: pointer;
+            color: #444;
+        }
+
+        .functional .bi:hover {
+            color: #F40009;
+        }
+
+        /* Footer */
+        footer {
+            background: #02187D;
+            padding: 30px;
+            margin-top: 30px;
+            color: #fff;
+        }
+
+        footer a {
+            color: #FEBD69;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+            color: #fff;
+        }
+
+        #mainImageGallery img {
+            width: 100%;
+            /* Ocupa todo el ancho del contenedor */
+            height: auto;
+            /* Mantiene proporción */
+            display: block;
+            object-fit: cover;
+            /* Recorta si es necesario para llenar el contenedor */
+        }
+
+        .bg-bolivia {
+            height: 5px;
+            background: linear-gradient(to right,
+                    var(--bolivia-blue) 0%,
+                    var(--bolivia-blue) 66%,
+                    /* Azul ocupa 66% */
+                    var(--bolivia-red) 66%,
+                    var(--bolivia-red) 77%,
+                    /* Rojo 11% */
+                    var(--bolivia-yellow) 77%,
+                    var(--bolivia-yellow) 88%,
+                    /* Amarillo 11% */
+                    var(--secondary-color) 88%,
+                    var(--secondary-color) 100%
+                    /* Color 4: 12% aprox */
+                );
+        }
+
+        .header-fixed {
+            position: sticky;
+            top: 0;
+            z-index: 1030;/* Para que quede por encima del resto del contenido */
+            background-color: #f9f9f9;
+            padding: 10px 0;
+        }
+
+        .productos-card{
+         width: 50%;
+         float: left;   
+         transition: all .3s ease;
+        }
+
+        @media only screen and(min-width:768px) {
+            .productos-card{
+                width: 33.3%;  
+            }
+        }
+        .productos-card:hover{
+             background-color: #e1e1e1;
+             --webkit-transform: scale(1.1);
+        }

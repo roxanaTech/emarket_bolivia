@@ -1,0 +1,116 @@
+
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flexbox;
+  justify-content: center;
+  align-items: center;
+  background-color: #f2f1f0;
+}
+
+.container {
+  background-color: #f2f1f0;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.view {
+  text-align: center;
+  padding: 10px;
+  padding-top: 30px;
+  background-size: cover;
+  flex-shrink: 1;
+}
+
+/* Contenedor central del formulario de registro */
+.register-container {
+  display: flexbox;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  max-width: 500px;
+  height: auto;
+  margin: 80px auto;
+  margin-bottom: 20px;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.subtitle {
+  font-weight: bold;
+  color: #001B7A;
+  font-size: 16px;
+  margin-bottom: 25px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="telf"],
+input[type="ci"] {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px;
+  border-radius: 4px;
+  background-color: #EAEAEA;
+  font-size: 16px;
+  color: rgb(31, 31, 37);
+}
+
+.btn-register {
+  background-color: white;
+  color:#1db854;
+  border: 3px solid#1db854;
+  padding: 12px;
+  width: 100%;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  margin-top: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-register:hover {
+  background-color: rgb(13, 135, 48);
+  color: #f2f1f0;
+}
+
+/* Mensajes de éxito o error */
+.success {
+  color: green;
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+.error {
+  color: red;
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  margin: 0, auto;
+  height: auto;
+}
+
+select.form-select {
+  height: calc(1.5em + .75rem + 2px);
+}
+
+@media (min-width: 768px) {
+  img {
+    width: 400px;
+  }
+}

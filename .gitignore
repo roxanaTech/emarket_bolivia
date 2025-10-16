@@ -33,3 +33,4 @@ Thumbs.db
 #carpetas de imagenes
 backend/public/uploads/productos/
 backend/src/uploads/devoluciones/
+frontend/pruebas/

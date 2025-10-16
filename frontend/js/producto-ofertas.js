@@ -1,6 +1,5 @@
 // --- CONSTANTES ---
-var OFERTAS_POR_PAGINA = 12; // Para grid de 4 columnas
-var BASE_URL = 'http://localhost/emarket_bolivia/backend/public';
+var OFERTAS_POR_PAGINA = 12;
 
 // Contenedores del DOM
 const headerContainer = document.getElementById('offer-header-container');
@@ -146,7 +145,7 @@ async function fetchOffers(filters, page = 1) {
     params.append('pagina', page);
     params.append('por_pagina', OFERTAS_POR_PAGINA);
 
-    const fullUrl = `${BASE_URL}/productos/buscar?${params.toString()}`;
+    const fullUrl = `${apiUrl}/productos/buscar?${params.toString()}`;
     console.log('DEBUG - Llamando a endpoint de ofertas:', fullUrl);
 
     if (offerCardsContainer) offerCardsContainer.innerHTML = '<p class="text-center text-xl text-primary col-span-full">Cargando ofertas...</p>';
@@ -287,7 +286,7 @@ function createProductCard(producto) {
             ${fechaVenceHtml}
             <button
                 class="w-full mt-2 bg-primary text-background-light font-bold py-2 px-4 rounded-md hover:bg-primary/90 transition-colors text-sm"
-                onclick="event.stopPropagation(); event.preventDefault(); anadirAlCarrito(${producto.id_producto});"
+                onclick="event.stopPropagation(); event.preventDefault(); agregarAlCarrito(${producto.id_producto});"
                 aria-label="Añadir ${producto.nombre} al carrito">
                 Añadir al Carrito
             </button>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>e-market Bolivia - Gestión Productos</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#02187D",
+                        "background-light": "#ffffff",
+                        "background-dark": "#0f1223",
+                        "sidebar-bg": "#f2f1f0",
+                        "success": "#1db954",
+                        "danger": "#F40009",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-[#0d0f1c]">
+    <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+        <div class="flex flex-col lg:flex-row h-full grow">
+            <aside class="hidden lg:flex w-64 flex-col bg-sidebar-bg p-4 flex-shrink-0">
+                <div class="flex items-center mb-8 px-2">
+                    <img src="./img/logoh.png" alt="Logo emarket-bolivia"
+                        class="hidden md:block h-[4rem] object-contain">
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg text-primary hover:bg-primary/10" href="#">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <p class="text-sm font-medium">Dashboard</p>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg bg-primary text-white" href="#">
+                        <span class="material-symbols-outlined">sell</span>
+                        <p class="text-sm font-medium">Productos</p>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg text-primary hover:bg-primary/10" href="#">
+                        <span class="material-symbols-outlined">inventory_2</span>
+                        <p class="text-sm font-medium">Ordenes</p>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg text-primary hover:bg-primary/10" href="#">
+                        <span class="material-symbols-outlined">campaign</span>
+                        <p class="text-sm font-medium">Marketing &amp; Promociones</p>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg text-primary hover:bg-primary/10" href="#">
+                        <span class="material-symbols-outlined">settings</span>
+                        <p class="text-sm font-medium">Configuración</p>
+                    </a>
+                </nav>
+            </aside>
+            <div class="flex-1">
+                <header class="flex items-center justify-between p-4 border-b border-gray-200 lg:border-none">
+                    <div class="flex items-center gap-4">
+                        <button class="lg:hidden p-2 rounded-md hover:bg-gray-100">
+                            <span class="material-symbols-outlined text-primary">menu</span>
+                        </button>
+                        <div class="flex items-center gap-2 lg:hidden">
+                            <div class="size-7 text-primary">
+                                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                    <path clip-rule="evenodd"
+                                        d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z"
+                                        fill="currentColor" fill-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-primary text-lg font-bold">e-market Bolivia</h2>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button class="p-2 rounded-full hover:bg-gray-100">
+                            <span class="material-symbols-outlined text-primary">notifications</span>
+                        </button>
+                        <div class="relative group">
+                            <button class="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100">
+                                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8"
+                                    data-alt="Seller profile picture"
+                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDWz1oLiNOCqS3OD_xXGHqqQfwtYwwzdOLnSGU2hUqIsXjPVFJRunHci2SebbTBvVryfYGoflmPvZj-uYCK2OccSng6qrdZYWntc4Dz2Tx1FSkqMZOCYuZSmi-hmw3VooUy5mYYBwV0Qrw4fa60Cuizy7W3v8Xm-8-AMItZcY9xroD93mmV5yBKEra8ltkALw2FqN1z_unumjnzVW_Ct_DQjNLPGCk9pcoadkvEhEjgDAbJtYqhvG3xa7rp_F5EsU8lkN_2a2_hDw");'>
+                                </div>
+                            </button>
+                            <div
+                                class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 hidden group-hover:block">
+                                <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" href="#">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <main class="p-4 sm:p-6 lg:p-8">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                        <h1
+                            class="text-primary text-3xl lg:text-4xl font-black leading-tight tracking-tight mb-4 sm:mb-0">
+                            Gestión de Productos</h1>
+                        <button
+                            class="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors">
+                            <span class="material-symbols-outlined">add</span>
+                            Add New Product
+                        </button>
+                    </div>
+                    <div class="mb-6 space-y-4">
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                            <input
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+                                placeholder="Search products by name or SKU..." type="text" />
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <select class="border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                                <option selected="">Status: All</option>
+                                <option>Status: Active</option>
+                                <option>Status: Inactive</option>
+                            </select>
+                            <select class="border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                                <option selected="">Stock: All</option>
+                                <option>Minimum Stock</option>
+                            </select>
+                            <select class="border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                                <option selected="">Category: All</option>
+                                <option>Electronics</option>
+                                <option>Clothing</option>
+                                <option>Home &amp; Kitchen</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3" scope="col">Imagen</th>
+                                    <th class="px-6 py-3" scope="col">Nombre de Producto</th>
+                                    <th class="px-6 py-3" scope="col">Precio</th>
+                                    <th class="px-6 py-3" scope="col">Stock</th>
+                                    <th class="px-6 py-3" scope="col">Estado</th>
+                                    <th class="px-6 py-3" scope="col">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white border-b">
+                                    <td class="px-6 py-4">
+                                        <img alt="Product Image" class="h-12 w-12 object-cover rounded-md"
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCG3EhGRzR0VQnoMzRkzAsvdHtgUSVsOnTyOtzOLVukUUKQrUu1b21NuNcr8HH04nt3frTd2qlCmEmnt2TzXXMSwngNoGIZXb31b-xWCpjLrOKQxrc9IoHOSWzmbIUGg-d_NmHKremg704RLRHR8KV5jhTxPA7dTl5D_N43dQaXkRhYUYabFeyXtm3QXe4bSLPK3aSntLNA6Tudqhw6M9PQd3mb7KxrbAqaucjd2LFL09DJNLmqDPLvqM7P3bPpRo8vxRZy3Km_2w" />
+                                    </td>
+                                    <th class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap" scope="row">
+                                        <a class="text-primary hover:underline" href="#">Classic Wrist Watch</a>
+                                    </th>
+                                    <td class="px-6 py-4">Bs. 350.00</td>
+                                    <td class="px-6 py-4 text-success font-bold">120</td>
+                                    <td class="px-6 py-4">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input checked="" class="sr-only peer" type="checkbox" value="" />
+                                            <div
+                                                class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success">
+                                            </div>
+                                        </label>
+                                    </td>
+                                    <td class="px-6 py-4 flex items-center gap-3">
+                                        <button class="p-1 text-primary hover:bg-primary/10 rounded-full">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </button>
+                                        <button class="p-1 text-danger hover:bg-danger/10 rounded-full">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="bg-white border-b">
+                                    <td class="px-6 py-4">
+                                        <img alt="Product Image" class="h-12 w-12 object-cover rounded-md"
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKQULxyOXtK9VpTP-5UtTMBKfsO96sq6E0A0KsCK6kvKiL7z506rk29Bx4YWtqBQ6srIZqCX6mroLvGFijmynkDVpg2hLHrhAZT4jBYcPWzG1PSPDLpeLo79hwGGpZ3E__30PzrLIMjdEK1VCfgzAsE2M2uFqehyXZXkSIOnD1TDOfg_a8LYsMsfr5DlBKjX4EU6v6XG3i4HnE2cMXpTPPI9Um8kKYV6Gh3UHINvEfLxYI66uab0tXimKNUkLBluyYhBBHRqGPRw" />
+                                    </td>
+                                    <th class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap" scope="row">
+                                        <a class="text-primary hover:underline" href="#">Red Sports Shoes</a>
+                                    </th>
+                                    <td class="px-6 py-4">Bs. 599.99</td>
+                                    <td class="px-6 py-4 text-danger font-bold">5</td>
+                                    <td class="px-6 py-4">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input checked="" class="sr-only peer" type="checkbox" value="" />
+                                            <div
+                                                class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success">
+                                            </div>
+                                        </label>
+                                    </td>
+                                    <td class="px-6 py-4 flex items-center gap-3">
+                                        <button class="p-1 text-primary hover:bg-primary/10 rounded-full">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </button>
+                                        <button class="p-1 text-danger hover:bg-danger/10 rounded-full">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="bg-white border-b">
+                                    <td class="px-6 py-4">
+                                        <img alt="Product Image" class="h-12 w-12 object-cover rounded-md"
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVPjZ9VjPiTokEO_4nDPA_nwMMNiuKidiodiL8B1chv5OT2tGiT3jFfLsUQInfNqAY1ixwrJ5YoiVaZUHUXtG4OEk750JiNaEbOSK6haNvMhcT6kAsaByokWKvGx8aAwd5H_1Q56Kk200rja9fnYzsa-husGu9gB65jmrsVMWL16MGLXBZaJJd3Qsz24r3QMe8mOny5eupabyPWY3PYuFuufnWbSAYLDHw8nEMPuupfmFFI13DGNdH_gA91NjJ-iMH7CFmD9HR-w" />
+                                    </td>
+                                    <th class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap" scope="row">
+                                        <a class="text-primary hover:underline" href="#">Modern Sunglasses</a>
+                                    </th>
+                                    <td class="px-6 py-4">Bs. 150.00</td>
+                                    <td class="px-6 py-4 text-success font-bold">75</td>
+                                    <td class="px-6 py-4">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input class="sr-only peer" type="checkbox" value="" />
+                                            <div
+                                                class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success">
+                                            </div>
+                                        </label>
+                                    </td>
+                                    <td class="px-6 py-4 flex items-center gap-3">
+                                        <button class="p-1 text-primary hover:bg-primary/10 rounded-full">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </button>
+                                        <button class="p-1 text-danger hover:bg-danger/10 rounded-full">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="px-6 py-4">
+                                        <img alt="Product Image" class="h-12 w-12 object-cover rounded-md"
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBf_tgDAnLMj0WpanAoLagLVE8l6ve2lF-s2opm0RCizI65_jbJ5RX_qk3aL9jEY2UHTE1wYeEKTJRw5eLcJfxyvVxVAlF543WnDJoGuNGao7317-QNzGccm6AoDE0D4Lwklhl57rd5Op-M9DB6fR7CnlZibOjH5L1FEuzcPjrR5LkMOXfowWni5kt44Q-QWHGnrvmUOMR8FEHg2Kkg-TIIwacis73ehSqM7yWSxtg3MZkIhGN3J4SsSOPzee9xlIOVj6zhhi5Hdw" />
+                                    </td>
+                                    <th class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap" scope="row">
+                                        <a class="text-primary hover:underline" href="#">Wireless Headphones</a>
+                                    </th>
+                                    <td class="px-6 py-4">Bs. 890.50</td>
+                                    <td class="px-6 py-4 text-success font-bold">200</td>
+                                    <td class="px-6 py-4">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input checked="" class="sr-only peer" type="checkbox" value="" />
+                                            <div
+                                                class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success">
+                                            </div>
+                                        </label>
+                                    </td>
+                                    <td class="px-6 py-4 flex items-center gap-3">
+                                        <button class="p-1 text-primary hover:bg-primary/10 rounded-full">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </button>
+                                        <button class="p-1 text-danger hover:bg-danger/10 rounded-full">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Table navigation" class="flex items-center justify-between pt-4">
+                        <span class="text-sm font-normal text-gray-500">Showing <span
+                                class="font-semibold text-gray-900">1-4</span> of <span
+                                class="font-semibold text-gray-900">100</span></span>
+                        <ul class="inline-flex -space-x-px text-sm h-8">
+                            <li>
+                                <a class="flex items-center justify-center px-3 h-8 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700"
+                                    href="#">Previous</a>
+                            </li>
+                            <li>
+                                <a aria-current="page"
+                                    class="flex items-center justify-center px-3 h-8 text-white border border-primary bg-primary hover:bg-primary/90"
+                                    href="#">1</a>
+                            </li>
+                            <li>
+                                <a class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+                                    href="#">2</a>
+                            </li>
+                            <li>
+                                <a class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+                                    href="#">...</a>
+                            </li>
+                            <li>
+                                <a class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+                                    href="#">10</a>
+                            </li>
+                            <li>
+                                <a class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700"
+                                    href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </main>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

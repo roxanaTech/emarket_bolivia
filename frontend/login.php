@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión</title>
+    <link rel="icon" type="image/png" href="./img/icon.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
@@ -55,18 +56,15 @@
             font-weight: 500;
             text-align: left;
             font-size: 0.85rem;
-            /* 🔽 Smaller */
             margin-bottom: 5px;
         }
 
         .form-control {
             width: 100%;
             padding: 8px 12px;
-            /* 🔽 Compact */
             border: 1px solid #ced4da;
             border-radius: 6px;
             font-size: 0.9rem;
-            /* 🔽 Smaller */
             transition: border-color 0.2s;
             margin-bottom: 15px;
         }
@@ -95,11 +93,9 @@
             border: none;
             width: 100%;
             padding: 10px;
-            /* 🔽 Slightly smaller */
             border-radius: 6px;
             font-weight: 600;
             font-size: 0.95rem;
-            /* 🔽 Smaller */
             cursor: pointer;
             transition: background-color 0.2s;
         }
@@ -145,7 +141,6 @@
 
 <body>
     <div class="login-card">
-        <!-- Solo logo -->
         <div class="login-logo">
             <a href="principal.php"><img src="./img/logoh.png" alt="Logo e-market Bolivia"></a>
         </div>
@@ -203,14 +198,17 @@
                             'Content-Type': 'application/json',
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ email, password })
+                        body: JSON.stringify({
+                            email,
+                            password
+                        })
                     });
 
                     const data = await response.json();
 
                     if (response.ok && data.data?.token) {
                         localStorage.setItem('token', data.data.token);
-                        window.location.href = 'perfilUsuario.html';
+                        window.location.href = 'perfilUsuario.php';
                     } else {
                         alert(data.mensaje || 'Credenciales incorrectas');
                     }
@@ -221,7 +219,7 @@
             });
         });
     </script>
-
+    <script src="./js/global.js"></script>
 </body>
 
 </html>

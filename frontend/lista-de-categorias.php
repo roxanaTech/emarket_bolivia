@@ -137,7 +137,7 @@
     <?php
     include 'footer.php';
     ?>
-    <!-- NO agregues el script aquí; ya está en navbar.php -->
+    <script src="./js/global.js"></script>
 </body>
 
 </html>

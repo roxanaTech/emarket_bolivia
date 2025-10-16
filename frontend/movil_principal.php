@@ -5,18 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>e-market Bolivia</title>
-    <link rel="icon" type="image/png" href="./img/icon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="./css/variables.css">
+    <link rel="stylesheet" href="./css/estilos.css">
     <link rel="stylesheet" href="./css/custom.css">
 </head>
 
 <body>
-    <?php
-    include 'navbar.php';
-    ?>
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 hidden"></div>
     <!-- Carrusel de Ofertas -->
     <section class="container pb-5">
         <div id="offersCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="3000">
@@ -74,40 +71,33 @@
                 <h2 class="section-title">Categorías Populares</h2>
             </div>
             <div class="col-auto">
-                <a href="categorias-productos.php?id_categoria=1" class="btn btn-outline-primary btn-view-more">Ver más categorías →</a>
+                <a href="#" class="btn btn-outline-primary btn-view-more">Ver más categorías →</a>
             </div>
         </div>
 
         <div class="row g-4">
             <div class="col-6 col-md-3 text-center">
-                <a href="categorias-productos.php?id_categoria=1">
-                    <div class="category-circle">
-                        <img src="./img/electronicos.jpg" alt="Electrónica" class="cursor-pointer hover:shadow-lg hover:scale-105 transition duration-300">
-                    </div>
-                </a>
+                <div class="category-circle">
+                    <img src="./img/electronicos.jpg" alt="Electrónica" class="cursor-pointer hover:shadow-lg hover:scale-105 transition duration-300">
+                </div>
                 <div class="category-name">Electrónica</div>
             </div>
             <div class="col-6 col-md-3 text-center">
-                <a href="categorias-productos.php?id_categoria=2">
-                    <div class="category-circle">
-                        <img src="./img/moda.jpg" alt="Moda" class="cursor-pointer hover:shadow-lg hover:scale-105 transition duration-300">
-                    </div>
-                </a>
+                <div class="category-circle">
+                    <img src="./img/moda.jpg" alt="Moda" class="cursor-pointer hover:shadow-lg hover:scale-105 transition duration-300">
+                </div>
                 <div class="category-name">Moda</div>
             </div>
             <div class="col-6 col-md-3 text-center">
-                <a href="categorias-productos.php?id_categoria=3">
-                    <div class="category-circle">
-                        <img src="./img/hogar.jpg" alt="Hogar" class="cursor-pointer hover:shadow-lg hover:scale-105 transition duration-300">
-                    </div>
-                </a>
+                <div class="category-circle">
+                    <img src="./img/hogar.jpg" alt="Hogar" class="cursor-pointer hover:shadow-lg hover:scale-105 transition duration-300">
+                </div>
                 <div class="category-name">Hogar</div>
             </div>
-            <div class="col-6 col-md-3 text-center"><a href="categorias-productos.php?id_categoria=4">
-                    <div class="category-circle">
-                        <img src="./img/deporte.jpg" alt="Deportes" class="cursor-pointer hover:shadow-lg hover:scale-105 transition duration-300">
-                    </div>
-                </a>
+            <div class="col-6 col-md-3 text-center">
+                <div class="category-circle">
+                    <img src="./img/deporte.jpg" alt="Deportes" class="cursor-pointer hover:shadow-lg hover:scale-105 transition duration-300">
+                </div>
                 <div class="category-name">Deportes</div>
             </div>
         </div>
@@ -119,10 +109,6 @@
         <div id="productos-destacados" class="row g-4">
         </div>
     </div>
-    <?php
-    // 2. Incluir el pie de página 
-    include 'footer.php';
-    ?>
     <script src="./js/index.js"></script>
     <script src="./js/global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

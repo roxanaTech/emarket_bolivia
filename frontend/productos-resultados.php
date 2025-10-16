@@ -72,6 +72,7 @@
     <?php
     include 'navbar.php';
     ?>
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 hidden"></div>
     <div class="flex flex-col min-h-screen">
         <main class="container mx-auto px-4 lg:px-8 py-8 flex-grow">
             <div class="flex flex-col lg:flex-row gap-8">

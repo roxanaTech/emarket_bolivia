@@ -1,6 +1,5 @@
 // --- CONSTANTES ---
 var PRODUCTOS_POR_PAGINA = 10;
-var BASE_URL = 'http://localhost/emarket_bolivia/backend/public';
 
 // Contenedores del DOM (solo si existen, para compatibilidad con otras páginas)
 const headerContainer = document.getElementById('header-container');
@@ -194,7 +193,7 @@ async function loadBrands(filters) {
         return;
     }
 
-    const fullUrl = BASE_URL + endpoint;
+    const fullUrl = apiUrl + endpoint;
     console.log(`Cargando marcas desde: ${fullUrl}`);
 
     try {
@@ -329,7 +328,7 @@ async function fetchProductsByAdvancedFilters(filters, page = 1) {
     params.append('pagina', page);
     params.append('por_pagina', PRODUCTOS_POR_PAGINA);
 
-    const fullUrl = `${BASE_URL}/productos/buscar?${params.toString()}`;
+    const fullUrl = `${apiUrl}/productos/buscar?${params.toString()}`;
     console.log('Llamando a endpoint de búsqueda:', fullUrl);
 
     if (productCardsContainer) productCardsContainer.innerHTML = '<p class="text-center text-xl text-primary">Aplicando filtros...</p>';
@@ -577,7 +576,7 @@ function createProductCard(producto) {
                         <button
                             class="bg-primary text-white font-bold py-2 px-6 rounded-lg hover:bg-primary/80 transition-colors duration-300"
                             data-id-producto="${producto.id_producto}"
-                            onclick="event.stopPropagation(); event.preventDefault(); anadirAlCarrito(${producto.id_producto});">
+                            onclick="event.stopPropagation(); event.preventDefault(); agregarAlCarrito(${producto.id_producto});">
                             Añadir al Carrito
                         </button>
                     </div>
@@ -702,7 +701,7 @@ async function fetchAndRenderProducts(type, id, page = 1, categoriaPadreId = nul
         return;
     }
 
-    const fullUrl = BASE_URL + endpoint;
+    const fullUrl = apiUrl + endpoint;
     console.log(`Endpoint llamado: ${fullUrl}`);
 
     if (productCardsContainer) productCardsContainer.innerHTML = '<p class="text-center text-xl text-primary">Cargando productos...</p>';
