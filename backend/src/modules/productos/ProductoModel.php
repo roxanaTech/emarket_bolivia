@@ -32,7 +32,7 @@ class ProductoModel
                 $data['marca'],
                 $data['precio'],
                 $data['stock'],
-                $data['sku'],
+                $data['sku'] ?? null,
                 $data['estado_producto'],
                 $data['color'] ?? null,
                 $data['modelo'] ?? null,
@@ -131,6 +131,29 @@ class ProductoModel
             return false;
         }
     }
+    /**
+     * Obtiene todas las imágenes de un producto.
+     */
+    public function obtenerImagenesProducto(int $idProducto): array
+    {
+        $sql = "SELECT id_imagen, ruta FROM imagen WHERE id_producto = ? ORDER BY id_imagen";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$idProducto]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Elimina imágenes específicas por sus IDs.
+     */
+    public function eliminarImagenesPorIds(array $ids): bool
+    {
+        if (empty($ids)) return true;
+
+        $placeholders = str_repeat('?,', count($ids) - 1) . '?';
+        $sql = "DELETE FROM imagen WHERE id_imagen IN ($placeholders)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute($ids);
+    }
 
     /**
      * Elimina un producto de la base de datos (se usa para revertir una creación fallida).
@@ -178,7 +201,15 @@ class ProductoModel
     public function recuperarProducto(int $idProducto): array|false
     {
         try {
-            $sql = "SELECT * FROM producto WHERE id_producto = ?";
+            $sql = "SELECT p.*, 
+                    s.nombre AS nombre_subcategoria, 
+                    s.id_subcategoria,
+                    c.nombre AS nombre_categoria, 
+                    c.id_categoria
+                    FROM producto p
+                    JOIN subcategoria s ON p.id_subcategoria=s.id_subcategoria
+                    JOIN categoria c ON s.id_categoria=c.id_categoria
+                    WHERE id_producto = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idProducto]);
             return $stmt->fetch(PDO::FETCH_ASSOC);

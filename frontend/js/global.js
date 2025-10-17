@@ -1,9 +1,9 @@
 // === js/global.js ===
 
 // --- Configuración Global ---
-const host = window.location.hostname;
-const apiUrl = `http://${host}/emarket_bolivia/backend/public`;
-const token = localStorage.getItem('token');
+var host = window.location.hostname;
+var apiUrl = `http://${host}/emarket_bolivia/backend/public`;
+var token = localStorage.getItem('token');
 
 // ==========================================================
 // === LÓGICA DE AUTENTICACIÓN Y RENDERIZADO DEL NAVBAR ===

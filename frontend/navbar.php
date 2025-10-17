@@ -31,9 +31,9 @@
                 <a href="principal.php" class="font-medium text-sm md:text-base hover:text-blue-300">Inicio</a>
                 <a href="productos-ofertas.php" class="font-medium text-sm md:text-base hover:text-blue-300">Ofertas</a>
                 <a href="lista-de-categorias.php" class="hidden md:inline font-medium text-sm md:text-base hover:text-blue-300">Categorías</a>
-                <!-- Link "Empieza a vender" (se condicionarará con JS) -->
-                <a id="start-selling-link" href="#" class="font-bold text-sm md:text-base hover:text-blue-300">Empieza a vender</a>
-                <a href="#" class="font-medium text-sm md:text-base hover:text-blue-300">Ayuda</a>
+                <!-- Link "Empieza a vender" (se condicionarará con JS) 
+                <a id="start-selling-link" href="#" class="font-bold text-sm md:text-base hover:text-blue-300">Empieza a vender</a>-->
+                <a href="ayuda.php" class="md:block font-medium text-sm md:text-base hover:text-blue-300">Ayuda</a>
             </div>
             <!-- Contenedor de autenticación (se modifica dinámicamente con JS) -->
             <div id="auth-container">

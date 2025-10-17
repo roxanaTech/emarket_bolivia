@@ -311,4 +311,120 @@ class ProductoController
     {
         return $this->productoService->obtenerCalificacionDeProducto($idProducto);
     }
+    /**
+     * Actualiza un producto manteniendo imágenes existentes y agregando nuevas.
+     */
+    public function actualizarProductoConImagenes($payload, array $data, array $imagenesExistentes, array $archivosNuevos): array
+    {
+        $idUsuario = $payload->sub;
+        $idProducto = $data['id_producto'] ?? null;
+
+        if (!$idProducto) {
+            return ResponseHelper::error('ID de producto no proporcionado.', 400);
+        }
+
+        $idVendedor = $this->productoService->obtenerVendedorIdPorIdUsuario($idUsuario);
+        if (!$idVendedor) {
+            return ResponseHelper::error('No autorizado.', 403);
+        }
+
+        $productoExistente = $this->productoModel->recuperarProducto($idProducto);
+        if (!$productoExistente || $productoExistente['id_vendedor'] != $idVendedor) {
+            return ResponseHelper::error('Producto no encontrado o no autorizado.', 404);
+        }
+
+        // Validar datos del producto
+        $errores = $this->productoService->validarDatosProducto($data, $idProducto);
+        if (!empty($errores)) {
+            return ResponseHelper::error('Datos inválidos', 400, $errores);
+        }
+
+        // Actualizar datos del producto
+        if (!$this->productoModel->actualizarProducto($idProducto, $data)) {
+            return ResponseHelper::error('Error al actualizar el producto.', 500);
+        }
+
+        // ✅ NUEVA LÓGICA: Manejar imágenes existentes + nuevas
+        $this->procesarActualizacionImagenes($idProducto, $idVendedor, $imagenesExistentes, $archivosNuevos);
+
+        return ResponseHelper::success('Producto actualizado exitosamente.', ['id_producto' => $idProducto]);
+    }
+
+    /**
+     * Procesa la actualización de imágenes: mantiene existentes y agrega nuevas.
+     */
+    private function procesarActualizacionImagenes(int $idProducto, int $idVendedor, array $imagenesExistentes, array $archivosNuevos): void
+    {
+        // Paso 1: Obtener todas las imágenes actuales en la BD
+        $imagenesActualesBD = $this->productoModel->obtenerImagenesProducto($idProducto);
+        $rutasActuales = array_column($imagenesActualesBD, 'ruta', 'id_imagen');
+
+        // Paso 2: Determinar qué imágenes mantener (las que están en $imagenesExistentes y existen en BD)
+        $imagenesAMantener = [];
+        foreach ($imagenesExistentes as $ruta) {
+            // Buscar el id_imagen correspondiente a esta ruta
+            $idImagen = array_search($ruta, $rutasActuales);
+            if ($idImagen !== false) {
+                $imagenesAMantener[$idImagen] = $ruta;
+            }
+        }
+
+        // Paso 3: Eliminar de la BD y del disco las imágenes que NO se quieren mantener
+        $idsAMantener = array_keys($imagenesAMantener);
+        $todosLosIds = array_keys($rutasActuales);
+        $idsAEliminar = array_diff($todosLosIds, $idsAMantener);
+
+        if (!empty($idsAEliminar)) {
+            // Eliminar de la BD
+            $this->productoModel->eliminarImagenesPorIds($idsAEliminar);
+
+            // Eliminar del disco (solo las que se van a borrar)
+            foreach ($idsAEliminar as $id) {
+                $ruta = $rutasActuales[$id];
+                $rutaAbsoluta = __DIR__ . '/../../public/' . $ruta;
+                if (file_exists($rutaAbsoluta)) {
+                    unlink($rutaAbsoluta);
+                }
+            }
+        }
+
+        // Paso 4: Subir nuevas imágenes (si hay)
+        $nuevasImagenes = [];
+        if (!empty($archivosNuevos['name']) && count(array_filter($archivosNuevos['name'])) > 0) {
+            $resultadoNuevas = $this->imageService->handleProductImages($archivosNuevos, $idProducto, $idVendedor);
+            if (!isset($resultadoNuevas['errors'])) {
+                $nuevasImagenes = $resultadoNuevas['images'];
+            }
+        }
+
+        // Paso 5: Combinar imágenes mantenidas + nuevas
+        $todasLasImagenes = array_values($imagenesAMantener); // Solo rutas
+        foreach ($nuevasImagenes as $img) {
+            $todasLasImagenes[] = $img['ruta'];
+        }
+
+        // Paso 6: Actualizar imagen principal (la primera de la lista combinada)
+        if (!empty($todasLasImagenes)) {
+            // Buscar el id_imagen de la primera imagen
+            $primeraRuta = $todasLasImagenes[0];
+
+            // Si es una imagen existente mantenida
+            $idPrimera = array_search($primeraRuta, $rutasActuales);
+
+            // Si es una imagen nueva
+            if ($idPrimera === false) {
+                // Buscar en las nuevas imágenes
+                foreach ($nuevasImagenes as $img) {
+                    if ($img['ruta'] === $primeraRuta) {
+                        $idPrimera = $img['id_imagen'];
+                        break;
+                    }
+                }
+            }
+
+            if ($idPrimera !== false) {
+                $this->productoModel->vincularImagenPrincipal($idProducto, $idPrimera);
+            }
+        }
+    }
 }

@@ -486,7 +486,12 @@ function createProductCard(producto) {
         ratingHtml += createStarSvg(false);
     }
     const ratingContainerClass = 'text-rating-light';
-
+    let imgUrl = producto.imagen_principal_ruta || 'http://localhost/emarket_bolivia/frontend/img/default-avatar.png';
+    console.log("imgh: ", imgUrl);
+    if (!imgUrl.startsWith('http')) {
+        imgUrl = apiUrl + '/' + imgUrl;
+        console.log("img: ", imgUrl);
+    }
     return `
     <a href="#" 
        onclick="verProducto(${producto.id_producto}); return false;" 
@@ -494,7 +499,7 @@ function createProductCard(producto) {
         <div class="flex flex-col md:flex-row">
             <div class="md:w-1/3">
                 <div class="h-48 md:h-full bg-cover bg-center"
-                    style='background-image: url("${producto.imagen_principal_ruta}");'>
+                    style='background-image: url("${imgUrl}");'>
                 </div>
             </div>
             <div class="p-6 md:w-2/3 flex flex-col justify-between">

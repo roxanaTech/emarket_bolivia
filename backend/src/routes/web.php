@@ -3,6 +3,7 @@
 use App\Modules\Usuarios\UsuarioController;
 use App\Modules\Vendedores\VendedorController;
 use App\Modules\Productos\ProductoController;
+use App\Modules\Productos\CategoriaController;
 use App\Utils\ResponseHelper;
 use App\Middlewares\AuthMiddleware;
 use App\Modules\Eventos\EventoController;
@@ -59,6 +60,13 @@ $router->get('/categorias', function () use ($pdo) {
 $router->get('/subcategorias', function () use ($pdo) {
     $controller = new ProductoController($pdo);
     $respuesta = $controller->listarSubcategorias();
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
+// Listar subcategorías por categoria
+$router->get('/categorias/subcategorias', function () use ($pdo) {
+    $idCategoria = (int)($_GET['id_categoria'] ?? 1);
+    $controller = new CategoriaController($pdo);
+    $respuesta = $controller->listarSubcategoriasPorCategoria($idCategoria);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
 
@@ -240,6 +248,7 @@ $router->before('POST', '/usuarios/perfil/contrasena', [AuthMiddleware::class, '
 $router->before('POST', '/usuarios/imagen', [AuthMiddleware::class, 'handle']);
 $router->before('GET|PUT|DELETE', '/usuarios/.*', [AuthMiddleware::class, 'handle']);
 $router->before('POST|PUT', '/vendedores/.*', [AuthMiddleware::class, 'handle']);
+$router->before('GET', '/vendedor/.*', [AuthMiddleware::class, 'handle']);
 
 $router->before('POST', '/productos/registro', [AuthMiddleware::class, 'handle']);
 $router->before('POST', '/productos/actualizar', [AuthMiddleware::class, 'handle']);
@@ -247,6 +256,7 @@ $router->before('DELETE', '/productos/eliminar', [AuthMiddleware::class, 'handle
 
 $router->before('GET', '/productos/listarMisProductos', [AuthMiddleware::class, 'handle']);
 $router->before('POST', '/productos/actualizar-campo', [AuthMiddleware::class, 'handle']);
+$router->before('POST', '/productos/eliminar', [AuthMiddleware::class, 'handle']);
 $router->before('POST|GET|PUT|DELETE', '/eventos/.*', [AuthMiddleware::class, 'handle']);
 
 $router->before('POST|GET|PUT|DELETE', '/ventas/.*', [AuthMiddleware::class, 'handle']);
@@ -348,6 +358,18 @@ $router->delete('/usuarios/imagen', function () use ($pdo) {
     $respuesta = $controller->eliminarImagenPerfil($decoded);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
+// Obtener datos para gráficos del vendedor
+$router->get('/vendedor/graficos', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Vendedores\VendedorController($pdo);
+    $respuesta = $controller->obtenerDatosGraficos($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
 
 // Rutas Protegidas de Vendedores
 // ===================================
@@ -381,6 +403,18 @@ $router->put('/vendedores/perfil', function () use ($pdo) {
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
 
+// Obtener KPIs del vendedor
+$router->get('/vendedor/kpis', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+
+    $controller = new \App\Modules\Vendedores\VendedorController($pdo);
+    $respuesta = $controller->obtenerKPIs($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
 // Rutas Protegidas de Productos
 // ===================================
 
@@ -409,14 +443,21 @@ $router->post('/productos/actualizar', function () use ($pdo) {
     }
 
     $data = $_POST;
-    $files = $_FILES['images'] ?? [];
-    $controller = new ProductoController($pdo);
-    $respuesta = $controller->actualizarProducto($decoded, $files, $data);
+    $imagenesExistentes = $_POST['imagenes_existentes'] ?? [];
+    $archivosNuevos = $_FILES['imagenes_nuevas'] ?? [];
+
+    $controller = new \App\Modules\Productos\ProductoController($pdo);
+    $respuesta = $controller->actualizarProductoConImagenes(
+        $decoded,
+        $data,
+        $imagenesExistentes,
+        $archivosNuevos
+    );
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
 
 // Eliminar un producto
-$router->delete('/productos/eliminar', function () use ($pdo) {
+$router->post('/productos/eliminar', function () use ($pdo) {
     $decoded = $GLOBALS['auth_user'] ?? null;
     if (!$decoded) {
         ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
@@ -728,6 +769,7 @@ $router->get('/ventas/comprador', function () use ($pdo) {
 });
 
 // Listar todas las ventas del vendedor autenticado
+// Listar ventas del vendedor con paginación
 $router->get('/ventas/vendedor', function () use ($pdo) {
     $decoded = $GLOBALS['auth_user'] ?? null;
     if (!$decoded) {
@@ -735,8 +777,16 @@ $router->get('/ventas/vendedor', function () use ($pdo) {
         return;
     }
 
-    $controller = new VentaController($pdo);
-    $respuesta = $controller->listarVentasVendedor($decoded);
+    // Obtener parámetros de paginación
+    $pagina = (int)($_GET['pagina'] ?? 1);
+    $porPagina = (int)($_GET['por_pagina'] ?? 10);
+
+    // Validar valores
+    $pagina = max(1, $pagina);
+    $porPagina = max(1, min(100, $porPagina)); // Máx 100 por página
+
+    $controller = new \App\Modules\Ventas\VentaController($pdo);
+    $respuesta = $controller->listarVentasVendedor($decoded, $pagina, $porPagina);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
 // Obtener los detalles de una venta específica

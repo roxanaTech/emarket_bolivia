@@ -1,4 +1,5 @@
 // Variables para datos
+
 let currentUser = { nombres: '', email: '', telefono: '' };
 let updateOnlyTexts = false;
 
@@ -17,7 +18,7 @@ function handleAuthError() {
     console.warn('[AUTH ERROR] Sesión no válida o expirada. Eliminando token...');
     localStorage.removeItem('token');
     alert('Sesión expirada. Redirigiendo al login.');
-    window.location.href = '/login';
+    window.location.href = '/emarket_bolivia/frontend/login.php';
 }
 
 // Función para cargar perfil 
@@ -188,7 +189,7 @@ function deleteAccount() {
             if (data.status === 'success') {
                 alert('Tu cuenta ha sido eliminada exitosamente.');
                 localStorage.removeItem('token');
-                window.location.href = '/emarket_bolivia/frontend/emarket_bolivia/principal.php';
+                window.location.href = '/emarket_bolivia/frontend/principal.php';
             } else {
                 throw new Error(data.mensaje || 'Error desconocido al eliminar la cuenta');
             }
@@ -364,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 localStorage.removeItem('token');  // Elimina el token
                 console.log('Sesión cerrada');
                 alert('Sesión cerrada exitosamente. ¡Hasta pronto!');
-                window.location.href = '/emarket_bolivia/frontend/emarket_bolivia/principal.php';  // Redirige al login (ajusta la ruta)
+                window.location.href = '/emarket_bolivia/frontend/principal.php';  // Redirige al login (ajusta la ruta)
             }
         });
     }

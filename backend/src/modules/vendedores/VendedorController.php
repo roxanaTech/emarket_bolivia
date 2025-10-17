@@ -5,6 +5,7 @@ namespace App\Modules\Vendedores;
 use App\Modules\Usuarios\UsuarioController;
 use App\Utils\ResponseHelper;
 use App\Utils\Validator;
+use App\Services\VendedorService;
 use PDOException;
 use Exception;
 use Firebase\JWT\JWT;
@@ -14,11 +15,15 @@ class VendedorController
 {
     private $model;
     private $controller;
+    private $vendedorService;
+    private $db;
 
     public function __construct($pdo)
     {
         $this->model = new VendedorModel($pdo);
         $this->controller = new UsuarioController($pdo);
+        $this->vendedorService = new VendedorService($pdo);
+        $this->db = $pdo;
     }
 
     /**
@@ -104,5 +109,54 @@ class VendedorController
             'razon_social' => trim($data['razon_social']),
             'direcciones' => $data['direcciones'] ?? []
         ]);
+    }
+    /**
+     * Obtiene los KPIs del vendedor autenticado.
+     */
+    public function obtenerKPIs($payload): array
+    {
+        $idUsuario = $payload->sub;
+
+        // Obtener id_vendedor desde el usuario
+        $sql = "SELECT id_vendedor FROM vendedor WHERE id_usuario = :id_usuario";
+        $stmt = $this->db->prepare($sql); // Acceso temporal a db
+        $stmt->bindParam(':id_usuario', $idUsuario);
+        $stmt->execute();
+        $vendedor = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$vendedor) {
+            return ResponseHelper::error('No eres vendedor.', 403);
+        }
+
+        $kpis = $this->vendedorService->obtenerKPIsVendedor($vendedor['id_vendedor']);
+        return ResponseHelper::success('KPIs obtenidos.', $kpis);
+    }
+    /**
+     * Obtiene datos para gráficos del vendedor.
+     */
+    public function obtenerDatosGraficos($payload): array
+    {
+        $idUsuario = $payload->sub;
+
+        // Obtener id_vendedor
+        $sql = "SELECT id_vendedor FROM vendedor WHERE id_usuario = :id_usuario";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':id_usuario', $idUsuario);
+        $stmt->execute();
+        $vendedor = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$vendedor) {
+            return ResponseHelper::error('No eres vendedor.', 403);
+        }
+
+        $idVendedor = $vendedor['id_vendedor'];
+
+        $datos = [
+            'ventas_mensuales' => $this->vendedorService->obtenerVentasMensuales($idVendedor),
+            'ordenes_por_categoria' => $this->vendedorService->obtenerOrdenesPorCategoria($idVendedor),
+            'distribucion_estados' => $this->vendedorService->obtenerDistribucionEstados($idVendedor)
+        ];
+
+        return ResponseHelper::success('Datos para gráficos obtenidos.', $datos);
     }
 }
