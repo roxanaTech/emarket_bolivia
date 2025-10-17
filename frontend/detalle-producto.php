@@ -201,7 +201,6 @@
   include 'footer.php';
   ?>
   <script src="./js/detalle-producto.js"></script>
-  <script src="./js/global.js"></script>
 </body>
 
 </html>

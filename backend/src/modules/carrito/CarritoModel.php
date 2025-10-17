@@ -144,16 +144,4 @@ class CarritoModel
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return (float)$result['total'];
     }
-
-    public function obtenerTotalItems($idUsuario)
-    {
-        $sql = "SELECT SUM(cp.cantidad) AS total_items
-        FROM carrito_producto cp
-        JOIN carrito c ON cp.id_carrito = c.id_carrito
-        WHERE c.id_usuario = :id_usuario";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':id_usuario', $idUsuario, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
 }

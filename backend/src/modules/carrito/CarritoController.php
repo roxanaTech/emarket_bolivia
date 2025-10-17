@@ -32,7 +32,7 @@ class CarritoController
         return $this->carritoService->agregarProducto($idUsuario, (int)$idProducto, (int)$cantidad);
     }
 
-    public function listarCarrito($payload): array
+    public function listarCarrito($payload, array $data = [], array $files = []): array
     {
         $idUsuario = $payload->sub;
         return $this->carritoService->listarCarrito($idUsuario);
@@ -66,39 +66,15 @@ class CarritoController
         return $this->carritoService->eliminarItem($idUsuario, (int)$idItem);
     }
 
-    public function vaciarCarrito($payload): array
+    public function vaciarCarrito($payload, array $data = [], array $files = []): array
     {
         $idUsuario = $payload->sub;
         return $this->carritoService->vaciarCarrito($idUsuario);
     }
 
-    public function marcarComoConvertido($payload): array
+    public function marcarComoConvertido($payload, array $data = [], array $files = []): array
     {
         $idUsuario = $payload->sub;
         return $this->carritoService->marcarComoConvertido($idUsuario);
-    }
-
-    public function sumarItems($payload)
-    {
-        $idUsuario = $payload->sub;
-        $total = $this->carritoModel->obtenerTotalItems($idUsuario);
-        if ($total) {
-            return ResponseHelper::success('Total de Items.', $total, 400);
-        }
-        return ResponseHelper::error('Fallo el conteo de items.', 400);
-    }
-    /**
-     * Obtiene el carrito agrupado por vendedor, listo para finalizar la compra.
-     */
-    public function obtenerCarritoAgrupado($payload): array
-    {
-        $idUsuario = $payload->sub;
-        $resultado = $this->carritoService->obtenerCarritoAgrupadoPorVendedor($idUsuario);
-
-        if (empty($resultado['grupos_vendedores'])) {
-            return ResponseHelper::success('El carrito está vacío.', $resultado);
-        }
-
-        return ResponseHelper::success('Carrito agrupado por vendedor.', $resultado);
     }
 }

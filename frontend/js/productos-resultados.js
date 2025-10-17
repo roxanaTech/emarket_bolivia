@@ -1,5 +1,6 @@
 // --- CONSTANTES ---
-var PRODUCTOS_POR_PAGINA = 10;
+var PRODUCTOS_POR_PAGINA = 10; // Consistente con detalle-producto.js; cámbialo a 12 si prefieres
+var BASE_URL = 'http://localhost/emarket_bolivia/backend/public';
 
 // Contenedores del DOM (asumiendo estructura similar a categorias-productos.php)
 const headerContainer = document.getElementById('header-container');
@@ -115,7 +116,7 @@ async function loadBrands(filters) {
     }
 
     const endpoint = `/productos/marcas?${params.toString()}`;
-    const fullUrl = apiUrl + endpoint;
+    const fullUrl = BASE_URL + endpoint;
     console.log(`DEBUG - Cargando marcas con filtros desde: ${fullUrl}`);
 
     try {
@@ -358,7 +359,7 @@ async function fetchSearchProducts(filters, page = 1) {
     params.append('pagina', page);
     params.append('por_pagina', PRODUCTOS_POR_PAGINA);
 
-    const fullUrl = `${apiUrl}/productos/buscar?${params.toString()}`;
+    const fullUrl = `${BASE_URL}/productos/buscar?${params.toString()}`;
     console.log('DEBUG - Llamando a endpoint de búsqueda:', fullUrl);
 
     if (productCardsContainer) productCardsContainer.innerHTML = '<p class="text-center text-xl text-primary">Buscando productos...</p>';
@@ -532,7 +533,7 @@ function createProductCard(producto) {
                     <button
                         class="w-full sm:w-auto bg-primary text-white font-bold py-2 px-6 rounded-lg hover:bg-primary/80 transition-colors duration-300"
                         data-id-producto="${producto.id_producto}"
-                        onclick="event.stopPropagation(); event.preventDefault(); agregarAlCarrito(${producto.id_producto});">
+                        onclick="event.stopPropagation(); event.preventDefault(); anadirAlCarrito(${producto.id_producto});">
                         Añadir al Carrito
                     </button>
                 </div>

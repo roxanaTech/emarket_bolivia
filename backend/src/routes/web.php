@@ -233,22 +233,18 @@ $router->get('/reviews/producto/{id_producto}', function ($id_producto) use ($pd
     $respuesta = $controller->listarResenasPorProducto((int)$id_producto, $pagina);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
-$router->get('/vendedores/perfil/{idVendedor}', function ($idVendedor) use ($pdo) {
-    $controller = new VendedorController($pdo);
-    $respuesta = $controller->leer($idVendedor);
-    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
-});
-
 
 
 // Middleware para rutas protegidas
 // ===================================
 
-$router->before('POST', '/usuarios/perfil/contrasena', [AuthMiddleware::class, 'handle']);
-$router->before('POST', '/usuarios/imagen', [AuthMiddleware::class, 'handle']);
 $router->before('GET|PUT|DELETE', '/usuarios/.*', [AuthMiddleware::class, 'handle']);
+<<<<<<< HEAD
 $router->before('POST|PUT', '/vendedores/.*', [AuthMiddleware::class, 'handle']);
 $router->before('GET', '/vendedor/.*', [AuthMiddleware::class, 'handle']);
+=======
+$router->before('POST|GET|PUT', '/vendedores/.*', [AuthMiddleware::class, 'handle']);
+>>>>>>> parent of 5d8d2af (actualizando version beta)
 
 $router->before('POST', '/productos/registro', [AuthMiddleware::class, 'handle']);
 $router->before('POST', '/productos/actualizar', [AuthMiddleware::class, 'handle']);
@@ -269,18 +265,6 @@ $router->before('DELETE', '/reviews/.*', [AuthMiddleware::class, 'handle']);
 
 // Rutas Protegidas de Usuario
 // ===================================
-//actualizar contraseña
-$router->post('/usuarios/perfil/contrasena', function () use ($pdo) {
-    $decoded = $GLOBALS['auth_user'] ?? null;
-    if (!$decoded) {
-        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
-        return;
-    }
-    $data = RequestHelper::getJsonBody();
-    $controller = new UsuarioController($pdo);
-    $respuesta = $controller->actualizarPassword($decoded, $data);
-    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
-});
 
 // Ver perfil
 $router->get('/usuarios/perfil', function () use ($pdo) {
@@ -330,22 +314,19 @@ $router->get('/usuarios/imagen', function () use ($pdo) {
     $respuesta = $controller->obtenerImagenPerfil($decoded);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
+
 // Subir imagen para un usuario existente
 $router->post('/usuarios/imagen', function () use ($pdo) {
-    error_log("[DEBUG] decoded en rutas: " . ($decoded ?? 'sin ID'));
     $decoded = $GLOBALS['auth_user'] ?? null;
-
     if (!$decoded) {
         ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
         return;
     }
-    error_log("[DEBUG] Usuario autorizado en ruta imagen: " . print_r($decoded, true));
 
     $controller = new UsuarioController($pdo);
     $respuesta = $controller->actualizarImagenPerfil($_FILES, $decoded);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
-
 // eliminar imagen para un usuario existente
 $router->delete('/usuarios/imagen', function () use ($pdo) {
     $decoded = $GLOBALS['auth_user'] ?? null;
@@ -388,7 +369,16 @@ $router->post('/vendedores/registro', function () use ($pdo) {
 });
 
 // Ver perfil vendedor
-
+$router->get('/vendedores/perfil', function () use ($pdo) {
+    $decoded = $GLOBALS['auth_user'] ?? null;
+    if (!$decoded) {
+        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
+        return;
+    }
+    $controller = new VendedorController($pdo);
+    $respuesta = $controller->leer($decoded);
+    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
+});
 
 // Actualizar perfil vendedor
 $router->put('/vendedores/perfil', function () use ($pdo) {
@@ -707,30 +697,7 @@ $router->post('/carrito/convertir', function () use ($pdo) {
     $respuesta = $controller->marcarComoConvertido($decoded);
     ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
 });
-// contar items del carrito
-$router->get('/carrito/items', function () use ($pdo) {
-    $decoded = $GLOBALS['auth_user'] ?? null;
-    if (!$decoded) {
-        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
-        return;
-    }
 
-    $controller = new CarritoController($pdo);
-    $respuesta = $controller->sumarItems($decoded);
-    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
-});
-// Obtener carrito agrupado por vendedor (para finalizar compra)
-$router->get('/carrito/agrupado', function () use ($pdo) {
-    $decoded = $GLOBALS['auth_user'] ?? null;
-    if (!$decoded) {
-        ResponseHelper::sendJson(ResponseHelper::error('No autorizado', 401));
-        return;
-    }
-
-    $controller = new \App\Modules\Carrito\CarritoController($pdo);
-    $respuesta = $controller->obtenerCarritoAgrupado($decoded);
-    ResponseHelper::sendJson($respuesta, $respuesta['code'] ?? 200);
-});
 
 // Rutas Protegidas de Ventas
 // ===================================

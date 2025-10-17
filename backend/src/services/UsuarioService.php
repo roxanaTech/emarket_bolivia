@@ -76,8 +76,7 @@ class UsuarioService
 
         // Mover el archivo
         if (move_uploaded_file($archivo['tmp_name'], $rutaCompleta)) {
-            $ruta = '/uploads/usuarios/' . $nombreUnico;
-            return $ruta;
+            return $nombreUnico;
         } else {
             error_log("Error al mover el archivo a: $rutaCompleta");
             return null;

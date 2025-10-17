@@ -1,4 +1,5 @@
 // --- CONSTANTES COMUNES (reutilizadas de producto-categoria.js) ---
+var BASE_URL = 'http://localhost/emarket_bolivia/backend/public';
 var PRODUCTOS_POR_PAGINA = 10;  // Solo si usas AJAX
 
 const CATEGORIAS_MAP = {

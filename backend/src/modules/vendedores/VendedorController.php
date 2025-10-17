@@ -84,9 +84,10 @@ class VendedorController
      * @param string $authHeader Encabezado de autorización con el token JWT
      * @return array Respuesta con estado y datos del usuario
      */
-    public function leer($idVendedor)
+    public function leer($payload)
     {
-        return $this->model->recuperar($idVendedor);
+        $id_usuario = $payload->sub;
+        return $this->model->recuperar($id_usuario);
     }
 
     /**

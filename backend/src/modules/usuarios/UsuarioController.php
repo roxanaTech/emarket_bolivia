@@ -98,28 +98,6 @@ class UsuarioController
             return ResponseHelper::databaseError($e->getMessage());
         }
     }
-    /**
-     * comparar contraseña de un usuario
-     * @param array $data Datos de login (password)
-     * @return array Respuesta con estado
-     */
-    public function actualizarPassword($payload, $data)
-    {
-        $idUsuario = $payload->sub;
-        $reglasVendedor = [
-            'nueva_contrasena' => ['requerido'],
-            'confirmar_contrasena' => ['requerido'],
-            'contrasena_actual' => ['requerido'],
-
-        ];
-
-        $errores = Validator::validarCampos($data, $reglasVendedor);
-
-        if (!empty($errores)) {
-            return ResponseHelper::validationError($errores);
-        }
-        return $this->model->modificarPassword($idUsuario, $data);
-    }
 
     /**
      * Recupera los datos de un usuario autenticado
@@ -145,6 +123,7 @@ class UsuarioController
         return $this->model->modificar($id_usuario, [
             'nombres' => trim($data['nombres'] ?? ''),
             'email' => trim($data['email'] ?? ''),
+            'password' => trim($data['password'] ?? ''),
             'telefono' => trim($data['telefono'] ?? '')
         ]);
     }

@@ -11,41 +11,35 @@
     <link rel="stylesheet" href="./css/variables.css">
     <link rel="stylesheet" href="./css/estilos.css">
     <link rel="stylesheet" href="./css/custom.css">
-    <!-- Alpine.js para el dropdown -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- Google Material Icons para los spans -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
+
 <body>
-    <!-- Toast container-->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 hidden"></div>
     <!-- Top Nav (azul oscuro) -->
     <nav class="bg-blue-900 text-white py-3 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center px-4">
-            <!-- Sección izquierda del nav (agregamos ID para manipular con JS) -->
-            <div id="nav-left" class="flex items-center gap-6">
+            <!-- Botón hamburguesa (solo en pantallas pequeñas) -->
+            <div class="flex items-center gap-6">
                 <button id="sidebar-toggle" class=" text-white text-2xl">
                     <i class="bi bi-list"></i>
                 </button>
                 <a href="principal.php" class="font-medium text-sm md:text-base hover:text-blue-300">Inicio</a>
                 <a href="productos-ofertas.php" class="font-medium text-sm md:text-base hover:text-blue-300">Ofertas</a>
                 <a href="lista-de-categorias.php" class="hidden md:inline font-medium text-sm md:text-base hover:text-blue-300">Categorías</a>
+<<<<<<< HEAD
                 <!-- Link "Empieza a vender" (se condicionarará con JS) 
                 <a id="start-selling-link" href="#" class="font-bold text-sm md:text-base hover:text-blue-300">Empieza a vender</a>-->
                 <a href="ayuda.php" class="md:block font-medium text-sm md:text-base hover:text-blue-300">Ayuda</a>
+=======
+                <a href="#" class="font-medium text-sm md:text-base hover:text-blue-300">Ayuda</a>
+>>>>>>> parent of 5d8d2af (actualizando version beta)
             </div>
-            <!-- Contenedor de autenticación (se modifica dinámicamente con JS) -->
             <div id="auth-container">
-                <!-- Placeholder inicial: se reemplaza con renderAuthContainer() -->
-                <a href="login.php"
-                    class="inline-block px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold shadow-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200">
-                    <i class="bi bi-person-circle mr-2 text-base"></i> Iniciar Sesión
-                </a>
-
+                <a href="login.php" class="bg-blue-700 hover:bg-blue-800 px-3 py-1 my-4 text-sm rounded-md transition">Iniciar Sesión</a>
             </div>
         </div>
     </nav>
+
     <!-- Header principal (sticky) -->
     <header class="sticky top-12 z-40 bg-white shadow-sm">
         <div class="container mx-auto py-3 px-4">
@@ -82,9 +76,9 @@
                         <span class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
                     </div>
 
-                    <div class="relative"> <!-- Carrito -->
-                        <a href="carrito.php"><i class="bi bi-cart3 text-base text-black cursor-pointer md:text-lg"></i></a>
-                        <span id="badge-carrito" class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                    <div class="relative">
+                        <i class="bi bi-cart3 text-base text-black cursor-pointer md:text-lg"></i>
+                        <span class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
                     </div>
                 </div>
 
@@ -322,7 +316,6 @@
     </script>
     <script src="./js/categories-shared.js"></script>
     <script src="./js/navbar.js"></script>
-    <script src="./js/global.js"></script>
 </body>
 
 </html>

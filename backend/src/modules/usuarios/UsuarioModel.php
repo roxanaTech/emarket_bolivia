@@ -72,7 +72,7 @@ class UsuarioModel
     {
         try {
             $sql = "SELECT 
-                    *
+                    id_usuario, nombres, email, telefono, estado
                 FROM 
                     usuario 
                 WHERE 
@@ -93,12 +93,10 @@ class UsuarioModel
             // El usuario será el objeto principal
             $usuario = [
                 'id_usuario' => $resultados[0]['id_usuario'],
-                'rol' => $resultados[0]['rol'],
                 'nombres' => $resultados[0]['nombres'],
                 'email' => $resultados[0]['email'],
                 'telefono' => $resultados[0]['telefono'],
-                'estado' => $resultados[0]['estado'],
-                'imagen' => $resultados[0]['imagen_perfil']
+                'estado' => $resultados[0]['estado']
             ];
 
             return ResponseHelper::success('Usuario encontrado', $usuario);
@@ -139,64 +137,7 @@ class UsuarioModel
             return ResponseHelper::databaseError($e->getMessage());
         }
     }
-    /**
-     * Actualiza la contraseña de un usuario.
-     * @param int $id_usuario El ID del usuario a actualizar.
-     * @return array Resultado de la operación.
-     */
-    public function modificarPassword($idUsuario, $data)
-    {
-        // Validar que las nuevas contraseñas coincidan
-        if (!isset($data['nueva_contrasena']) || !isset($data['confirmar_contrasena']) || !isset($data['contrasena_original'])) {
-            return ResponseHelper::error('Faltan datos requeridos', 400);
-        }
 
-        if ($data['nueva_contrasena'] !== $data['confirmar_contrasena']) {
-            return ResponseHelper::error('Las nuevas contraseñas no coinciden', 400);
-        }
-
-        // Validar longitud mínima (opcional pero recomendado)
-        if (strlen($data['nueva_contrasena']) < 8) {
-            return ResponseHelper::error('La nueva contraseña debe tener al menos 8 caracteres', 400);
-        }
-
-        // Obtener contraseña actual del usuario
-        $sql = "SELECT password FROM usuario WHERE id_usuario = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$idUsuario]);
-        $usuario = $stmt->fetch();
-
-        if (!$usuario) {
-            return ResponseHelper::error('Usuario no encontrado', 404);
-        }
-
-        // Verificar que la contraseña original sea correcta
-        if (!password_verify($data['contrasena_original'], $usuario['password'])) {
-            return ResponseHelper::error('La contraseña actual es incorrecta', 400);
-        }
-
-        // Evitar que la nueva contraseña sea igual a la anterior
-        if (password_verify($data['nueva_contrasena'], $usuario['password'])) {
-            return ResponseHelper::error('La nueva contraseña no puede ser igual a la actual', 400);
-        }
-
-        // Actualizar contraseña
-        try {
-            $this->db->beginTransaction();
-
-            $passwordHash = password_hash($data['nueva_contrasena'], PASSWORD_DEFAULT);
-            $sqlUsuario = "UPDATE usuario SET password = ? WHERE id_usuario = ?";
-            $stmtUsuario = $this->db->prepare($sqlUsuario);
-            $stmtUsuario->execute([$passwordHash, $idUsuario]);
-
-            $this->db->commit();
-            return ResponseHelper::success('Contraseña actualizada exitosamente');
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log("Error al actualizar contraseña: " . $e->getMessage());
-            return ResponseHelper::databaseError('Error interno al actualizar la contraseña');
-        }
-    }
     /**
      * Desactiva (bloquea) un usuario cambiando su estado a 'false'.
      * @param int $id_usuario ID del usuario a desactivar.
@@ -264,23 +205,6 @@ class UsuarioModel
         }
         return null;
     }
-    /**
-     * Autentica contraseña
-     * @param string $password
-     * @return array|null Datos del usuario o null si las credenciales son inválidas
-     */
-    public function autenticarPassword($idUsuario, $password)
-    {
-        $sql = "SELECT password FROM usuario WHERE id_usuario = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$idUsuario]);
-        $usuario = $stmt->fetch();
-
-        if ($usuario && password_verify($password, $usuario['password'])) {
-            return $usuario;
-        }
-        return null;
-    }
 
 
     /**
@@ -290,7 +214,7 @@ class UsuarioModel
      */
     public function obtenerUsuarioPorId($id_usuario)
     {
-        $sql = "SELECT * FROM usuario WHERE id_usuario = :id";
+        $sql = "SELECT id_usuario, nombres, rol FROM usuario WHERE id_usuario = :id";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':id', $id_usuario, PDO::PARAM_INT);
         $stmt->execute();

@@ -51,10 +51,10 @@ class VendedorModel
                 return ResponseHelper::duplicateError('razon_social');
             }
 
-            $sql = "INSERT INTO vendedor (id_usuario, tipo_vendedor, cuenta_bancaria, banco, nit, matricula_comercial, correo_comercial, telefono_comercial, razon_social, descripcion_negocio, enlace_contacto) VALUES (?,?,?, ?, ?,?, ?, ?,?,?,?)";
+            $sql = "INSERT INTO vendedor (id_usuario, tipo_vendedor, cuenta_bancaria, nit, matricula_comercial, correo_comercial, telefono_comercial, razon_social) VALUES (?, ?, ?,?, ?, ?,?,?)";
             $stmtVendedor = $this->db->prepare($sql);
 
-            $stmtVendedor->execute([$id_usuario, $data['tipo_vendedor'], $data['cuenta_bancaria'], $data['banco'], $data['nit'], $data['matricula_comercial'] ?? '', $data['correo_comercial'], $data['telefono_comercial'], $data['razon_social'] ?? '', $data['descripcion_negocio'] ?? '', $data['enlace_contacto'] ?? '']);
+            $stmtVendedor->execute([$id_usuario, $data['tipo_vendedor'], $data['cuenta_bancaria'], $data['nit'], $data['matricula_comercial'] ?? '', $data['correo_comercial'], $data['telefono_comercial'], $data['razon_social'] ?? '']);
             $idVendedor = $this->db->lastInsertId();
 
             $idDireccionPrincipal = null;
@@ -119,20 +119,21 @@ class VendedorModel
      * @param int $id_vendedor El ID del vendedor a buscar.
      * @return array Resultado de la operación.
      */
-    public function recuperar($idVendedor)
+    public function recuperar($idUsuario)
     {
-
+        $idUsuarioInt = (int)$idUsuario;
+        $idVendedor = $this->recuperarIdVendedorPorIdUsuario($idUsuario);
+        if (!$idVendedor) {
+            return ResponseHelper::error('No se encontró un vendedor asociado a este usuario.(ID Usuario: ' . $idVendedor . ').', 404);
+        }
         try {
             // Consulta SQL que une la tabla de vendedores con la de direcciones.
             // Usamos LEFT JOIN para obtener el vendedor incluso si no tiene direcciones.
             $sql = "SELECT 
-                    v.*,
-                    u.nombres, u.imagen_perfil,
-                    d.*
+                    v.id_vendedor, v.tipo_vendedor, v.cuenta_bancaria, v.nit, v.matricula_comercial, v.correo_comercial, v.telefono_comercial,v.razon_social, v.id_direccion_principal, 
+                    d.id_direccion, d.departamento, d.provincia, d.ciudad, d.zona, d.calle, d.numero, d.referencias
                 FROM 
                     vendedor v
-                JOIN
-                    usuario u ON v.id_usuario = u.id_usuario
                 LEFT JOIN 
                     direccion d ON v.id_vendedor = d.id_vendedor
                 WHERE 
@@ -153,19 +154,14 @@ class VendedorModel
             // El vendedor será el objeto principal y sus direcciones estarán en un array anidado.
             $vendedor = [
                 'id_vendedor' => $resultados[0]['id_vendedor'],
-                'representante' => $resultados[0]['nombres'],
                 'tipo_vendedor' => $resultados[0]['tipo_vendedor'],
                 'cuenta_bancaria' => $resultados[0]['cuenta_bancaria'],
-                'banco' => $resultados[0]['banco'],
                 'nit' => $resultados[0]['nit'],
                 'matricula_comercial' => $resultados[0]['matricula_comercial'],
                 'correo_comercial' => $resultados[0]['correo_comercial'],
                 'telefono_comercial' => $resultados[0]['telefono_comercial'],
                 'razon_social' => $resultados[0]['razon_social'],
-                'descripcion_negocio' => $resultados[0]['descripcion_negocio'],
-                'enlace_contacto' => $resultados[0]['enlace_contacto'],
                 'id_direccion_principal' => $resultados[0]['id_direccion_principal'],
-                'imagen_perfil' => $resultados[0]['imagen_perfil'],
                 'direcciones' => [] // Inicializamos el array de direcciones.
             ];
 
@@ -254,19 +250,16 @@ class VendedorModel
             }
 
             // 1. Actualizar datos del usuario
-            $sqlVendedor = "UPDATE vendedor SET tipo_vendedor = ?, cuenta_bancaria = ?, banco =?, nit = ?, matricula_comercial = ?, correo_comercial = ?, telefono_comercial = ?, razon_social = ?, descripcion_vendedor=?, enlace_negocio=? WHERE id_vendedor = ?";
+            $sqlVendedor = "UPDATE vendedor SET tipo_vendedor = ?, cuenta_bancaria = ?, nit = ?, matricula_comercial = ?, correo_comercial = ?, telefono_comercial = ?, razon_social = ? WHERE id_vendedor = ?";
             $stmtVendedor = $this->db->prepare($sqlVendedor);
             $stmtVendedor->execute([
                 $datos['tipo_vendedor'] ?? '',
                 $datos['cuenta_bancaria'] ?? '',
-                $datos['banco'] ?? '',
                 $datos['nit'] ?? '',
                 $datos['matricula_comercial'] ?? null,
                 $datos['correo_comercial'] ?? null,
                 $datos['telefono_comercial'] ?? null,
                 $datos['razon_social'] ?? null,
-                $datos['descripcion_negocio'] ?? null,
-                $datos['enlace_contacto'] ?? null,
                 $idVendedor
             ]);
 

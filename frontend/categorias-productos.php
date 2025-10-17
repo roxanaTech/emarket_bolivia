@@ -10,7 +10,6 @@
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&amp;display=swap"
         rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link rel="stylesheet" href="./css/variables.css">
     <style>
@@ -50,7 +49,6 @@
     <?php
     include 'navbar.php';
     ?>
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 hidden"></div>
     <div class="flex min-h-screen flex-col">
         <header></header>
         <main class="mx-auto w-full max-w-7xl flex-grow p-4 sm:p-6 lg:p-8">
