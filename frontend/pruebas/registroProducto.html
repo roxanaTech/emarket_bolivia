@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Producto</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        form {
+            display: grid;
+            gap: 15px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        input[type="file"] {
+            border: 1px solid #ddd;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #218838;
+        }
+
+        .info-area {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        #apiMessage {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>📦 Registro de Nuevo Producto</h1>
+        <form id="registroForm">
+            <div>
+                <label for="subcategoria">Subcategoría:</label>
+                <select id="subcategoria" name="id_subcategoria" required></select>
+            </div>
+            <div>
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" required>
+            </div>
+            <div>
+                <label for="descripcion">Descripción:</label>
+                <textarea id="descripcion" name="descripcion" rows="4" required></textarea>
+            </div>
+            <div>
+                <label for="marca">Marca:</label>
+                <input type="text" id="marca" name="marca" required>
+            </div>
+            <div>
+                <label for="precio">Precio:</label>
+                <input type="number" id="precio" name="precio" step="0.01" min="0" required>
+            </div>
+            <div>
+                <label for="stock">Stock:</label>
+                <input type="number" id="stock" name="stock" min="0" required>
+            </div>
+            <div>
+                <label for="sku">SKU:</label>
+                <input type="text" id="sku" name="sku">
+            </div>
+            <div>
+                <label for="sku">Estado del Producto:</label>
+                <select id="estado" name="estado_producto">
+                    <option value="nuevo">Nuevo</option>
+                    <option value="usado">Usado</option>
+                </select>
+            </div>
+            <div>
+                <label for="images">Imágenes (1 a 6):</label>
+                <input type="file" id="images" name="images[]" accept="image/jpeg,image/png,image/webp" multiple
+                    required>
+            </div>
+            <input type="submit" value="Registrar Producto">
+        </form>
+
+        <div id="formDataDisplay" class="info-area" style="display: none;">
+            <h3>Datos a Enviar (FormData):</h3>
+            <pre id="formDataContent"></pre>
+        </div>
+
+        <div id="apiMessage"></div>
+    </div>
+
+    <script>
+        // Datos de categorías y subcategorías
+        // Estos datos se usarán para llenar el select de manera dinámica.
+        const categorias = [
+            { id_categoria: 1, nombre: 'Electrónica', codigo: 'ELEC' },
+            { id_categoria: 2, nombre: 'Hogar y Jardín', codigo: 'HOG' },
+            { id_categoria: 3, nombre: 'Moda y Accesorios', codigo: 'MODA' },
+            { id_categoria: 4, nombre: 'Deportes y Ocio', codigo: 'DEP' },
+            { id_categoria: 5, nombre: 'Automotriz', codigo: 'AUTO' },
+            { id_categoria: 6, nombre: 'Libros y Medios', codigo: 'LIB' },
+            { id_categoria: 7, nombre: 'Juguetes y Juegos', codigo: 'JUE' }
+        ];
+
+        const subcategorias = [
+            { id_subcategoria: 1, id_categoria: 1, nombre: 'Teléfonos Móviles', codigo: 'MOV' },
+            { id_subcategoria: 2, id_categoria: 1, nombre: 'Computadoras', codigo: 'COMP' },
+            { id_subcategoria: 3, id_categoria: 1, nombre: 'Audio y Video', codigo: 'AUDIO' },
+            { id_subcategoria: 4, id_categoria: 1, nombre: 'Cámaras', codigo: 'CAM' },
+            { id_subcategoria: 5, id_categoria: 2, nombre: 'Muebles', codigo: 'MUEB' },
+            { id_subcategoria: 6, id_categoria: 2, nombre: 'Decoración', codigo: 'DEC' },
+            { id_subcategoria: 7, id_categoria: 2, nombre: 'Herramientas', codigo: 'HERR' },
+            { id_subcategoria: 8, id_categoria: 2, nombre: 'Electrodomésticos', codigo: 'ELEC' },
+            { id_subcategoria: 9, id_categoria: 3, nombre: 'Ropa de Mujer', codigo: 'RMU' },
+            { id_subcategoria: 10, id_categoria: 3, nombre: 'Ropa de Hombre', codigo: 'RHO' },
+            { id_subcategoria: 11, id_categoria: 3, nombre: 'Calzado', codigo: 'CALZ' },
+            { id_subcategoria: 12, id_categoria: 3, nombre: 'Joyas y Relojes', codigo: 'JOY' },
+            { id_subcategoria: 13, id_categoria: 4, nombre: 'Artículos Deportivos', codigo: 'ARTD' },
+            { id_subcategoria: 14, id_categoria: 4, nombre: 'Camping y Senderismo', codigo: 'CAMP' },
+            { id_subcategoria: 15, id_categoria: 4, nombre: 'Bicicletas', codigo: 'BICI' },
+            { id_subcategoria: 16, id_categoria: 5, nombre: 'Vehículos', codigo: 'VEH' },
+            { id_subcategoria: 17, id_categoria: 5, nombre: 'Piezas de Repuesto', codigo: 'PIEZ' },
+            { id_subcategoria: 18, id_categoria: 5, nombre: 'Accesorios', codigo: 'ACC' },
+            { id_subcategoria: 19, id_categoria: 6, nombre: 'Novelas', codigo: 'NOV' },
+            { id_subcategoria: 20, id_categoria: 6, nombre: 'Libros de Texto', codigo: 'LIT' },
+            { id_subcategoria: 21, id_categoria: 6, nombre: 'Películas', codigo: 'PEL' },
+            { id_subcategoria: 22, id_categoria: 7, nombre: 'Juguetes', codigo: 'JUG' },
+            { id_subcategoria: 23, id_categoria: 7, nombre: 'Juegos de Mesa', codigo: 'JUEG' },
+            { id_subcategoria: 24, id_categoria: 7, nombre: 'Videojuegos', codigo: 'VID' }
+        ];
+
+        // Referencias a elementos del DOM
+        const form = document.getElementById('registroForm');
+        const subcategoriaSelect = document.getElementById('subcategoria');
+        const formDataDisplay = document.getElementById('formDataDisplay');
+        const formDataContent = document.getElementById('formDataContent');
+        const apiMessage = document.getElementById('apiMessage');
+
+
+        // Función para llenar el select de subcategorías
+        function llenarSubcategorias() {
+            // Limpiar opciones previas
+            subcategoriaSelect.innerHTML = '<option value="" disabled selected>Selecciona una subcategoría</option>';
+
+            // Iterar sobre el array de subcategorías y agregar opciones al select
+            subcategorias.forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub.id_subcategoria;
+                option.textContent = sub.nombre;
+                subcategoriaSelect.appendChild(option);
+            });
+        }
+
+        // Llamar a la función al cargar la página para poblar el select
+        document.addEventListener('DOMContentLoaded', llenarSubcategorias);
+
+        // Manejador del evento submit del formulario
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Previene el envío por defecto del formulario
+
+            // Limpia mensajes anteriores y áreas de visualización
+            apiMessage.textContent = '';
+            apiMessage.className = '';
+            formDataDisplay.style.display = 'none';
+
+            // Obtener el token del localStorage
+            const token = localStorage.getItem('token');
+            if (!token) {
+                mostrarMensajeError('No se encontró un token de autenticación. Por favor, inicia sesión.');
+                return;
+            }
+            // Validar la cantidad de imágenes
+            const imagesInput = document.getElementById('images');
+            const numimages = imagesInput.files.length;
+            if (numimages < 1 || numimages > 6) {
+                mostrarMensajeError('Debe seleccionar entre 1 y 6 imágenes.');
+                return;
+            }
+            // Validar formatos y tamaños (50KB min, 5MB max)
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            const minSize = 50 * 1024;  // 50KB
+            const maxSize = 5 * 1024 * 1024;  // 5MB
+            let imageErrors = [];
+            for (let i = 0; i < numimages; i++) {
+                const file = imagesInput.files[i];
+                if (!allowedTypes.includes(file.type)) {
+                    imageErrors.push(`Imagen ${i + 1}: Formato no permitido (solo JPG, PNG, WebP).`);
+                }
+                if (file.size < minSize) {
+                    imageErrors.push(`Imagen ${i + 1}: Demasiado pequeña (<50KB).`);
+                } else if (file.size > maxSize) {
+                    imageErrors.push(`Imagen ${i + 1}: Demasiado grande (>5MB).`);
+                }
+            }
+            if (imageErrors.length > 0) {
+                mostrarMensajeError(imageErrors.join('\n'));
+                return;
+            }
+
+            // Crear una instancia de FormData
+            const formData = new FormData(form);
+            console.log(mostrarFormData(formData));
+
+            // Mostrar los datos que se van a enviar
+            mostrarFormData(formData);
+
+            let apiUrl;
+
+            // Obtener el hostname de la URL actual.
+            // Esto funcionará tanto para localhost como para cualquier IP de red local (192.168.x.x, 10.x.x.x, etc.)
+            const host = window.location.hostname;
+
+            // Construir la URL base de la API usando el hostname actual
+            apiUrl = `http://${host}/emarket_bolivia`;
+            console.log(token)
+
+            const endpoint = `${apiUrl}/backend/public/productos/registro`;
+
+            try {
+                // Realizar la petición fetch de tipo POST
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Incluir el token en el encabezado
+                    },
+                    body: formData // El cuerpo de la petición es la instancia de FormData
+                });
+
+                if (!response.ok) {
+                    // Si la respuesta no es exitosa, intentar obtener un mensaje de error
+                    let errorText = '';
+                    try {
+                        const errorResult = await response.json();
+                        // Intentar obtener el mensaje de error de diferentes posibles propiedades del JSON
+                        errorText = errorResult.mensaje || errorResult.message || errorResult.error || `Error ${response.status}: ${response.statusText}`;
+                    } catch {
+                        // Si no se puede parsear como JSON, usar el estado y texto HTTP
+                        errorText = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorText);
+                }
+
+                // Si la respuesta es exitosa (response.ok)
+                const result = await response.json();
+                console.log('Respuesta de la API:', result); // Para depuración
+                const idProducto = result.data?.id_producto || result.id_producto;
+                mostrarMensajeExito(`✅ Producto registrado con éxito! ID: ${idProducto}, Código: ${result.data?.codigo_producto || 'N/A'}`);
+                form.reset();  // Resetear form
+                imagesInput.value = '';  // Limpiar files (no se resetea con reset())
+                formDataDisplay.style.display = 'none';  // Ocultar debug
+
+            } catch (error) {
+                // Manejar errores de la petición
+                mostrarMensajeError(`❌ Error al registrar el producto: ${error.message}`);
+                console.error('Error en la petición:', error);
+            }
+        });
+
+        // Función para mostrar el contenido de FormData
+        function mostrarFormData(formData) {
+            let dataString = '';
+            for (let [key, value] of formData.entries()) {
+                if (value instanceof File) {
+                    dataString += `${key}: Archivo (${value.name}, ${value.size} bytes, ${value.type})\n`;
+                } else {
+                    dataString += `${key}: ${value}\n`;
+                }
+            }
+            formDataContent.textContent = dataString;
+            formDataDisplay.style.display = 'block';
+        }
+
+        // Funciones para mostrar mensajes de éxito o error en la UI
+        function mostrarMensajeExito(mensaje) {
+            apiMessage.textContent = mensaje;
+            apiMessage.className = 'success';
+        }
+
+        function mostrarMensajeError(mensaje) {
+            apiMessage.textContent = mensaje;
+            apiMessage.className = 'error';
+        }
+        // Función para probar la conexión con el servidor (sin cambios, está bien)
+        async function testConnection() {
+            try {
+                const response = await fetch('http://localhost/emarket_bolivia/backend/public/status');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+                console.log('Test de conexión exitoso:', result);
+            } catch (error) {
+                console.error('Test de conexión falló:', error);
+            }
+        }
+        // Ejecutar test de conexión al cargar la página
+        window.addEventListener('load', testConnection);
+    </script>
+</body>
+
+</html>

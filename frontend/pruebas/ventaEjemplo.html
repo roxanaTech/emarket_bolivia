@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Simulación de Pago con Stripe</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Formulario de Compra</h2>
+
+    <form id="venta-form">
+        <div class="form-group">
+            <label>Nombre del comprador:</label>
+            <input type="text" id="nombre" required>
+        </div>
+
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" id="email" required>
+        </div>
+
+        <div class="form-group">
+            <label>Productos:</label>
+            <select id="producto" required>
+                <option value="4" data-precio="35">Shampoo sólido natural - Bs. 35</option>
+                <option value="2" data-precio="25">Jabón de carbón activado - Bs. 25</option>
+            </select>
+            <input type="number" id="cantidad" value="1" min="1">
+        </div>
+
+        <div id="card-element"></div>
+        <button type="submit">Pagar</button>
+    </form>
+
+    <div id="resultado"></div>
+
+    <script>
+        const stripe = Stripe("pk_test_51S9vkU1wwLAL5xw0X1eu0aovBSEoLuo5h0M8hEr8Yzp1x0RwE4otilsKk0ScI2fBAJgLVBh8dHyPt8R6cu5s0zmN00sawbrpKd");
+        const elements = stripe.elements();
+        const cardElement = elements.create("card");
+        cardElement.mount("#card-element");
+
+        document.getElementById("venta-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const productoId = document.getElementById("producto").value;
+            const precioUnit = parseFloat(document.getElementById("producto").selectedOptions[0].dataset.precio);
+            const cantidad = parseInt(document.getElementById("cantidad").value);
+            const total = precioUnit * cantidad;
+
+            const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJlbWFya2V0Iiwic3ViIjo0NywiaWF0IjoxNzU4NDY3NDEyLCJleHAiOjE3NTg1NTM4MTIsImRhdGEiOnsibm9tYnJlcyI6IlRlc3QyIiwicm9sIjoidmVuZGVkb3IifX0.phlSMjxfnTqTsdkiGoMQfx3M3wJ7dbv_lgvcH7PPF2k";
+
+            // 1. Crear venta en backend
+            const ventaResponse = await fetch("http://localhost/emarket_bolivia/backend/public/ventas/registrar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    id_comprador: 47,
+                    id_vendedor: 2,
+                    tipo_entrega: "envio",
+                    tipo_pago: "Stripe",
+                    productos: [
+                        { id_producto: parseInt(productoId), cantidad, precio_unit: precioUnit }
+                    ]
+                })
+            });
+
+            const ventaData = await ventaResponse.json();
+            const clientSecret = ventaData.data.client_secret;
+            const paymentIntentId = ventaData.data.payment_intent_id;
+
+            // 2. Confirmar pago con Stripe
+            const result = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        name: document.getElementById("nombre").value,
+                        email: document.getElementById("email").value
+                    }
+                }
+            });
+
+            if (result.error) {
+                document.getElementById("resultado").innerText = "Error en el pago: " + result.error.message;
+            } else if (result.paymentIntent.status === "succeeded") {
+                // 3. Confirmar pago en backend
+                await fetch("http://localhost/emarket_bolivia/backend/public/ventas/confirmar-pago", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        id_venta: ventaData.data.id_venta,
+                        payment_intent_id: paymentIntentId
+                    })
+                });
+
+                document.getElementById("resultado").innerText = "¡Pago exitoso! Venta registrada.";
+            }
+        });
+    </script>
+</body>
+
+</html>

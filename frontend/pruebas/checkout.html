@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirmar Compra</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+
+<body>
+    <main class="container">
+        <h1>Confirmar Compra</h1>
+
+        <section class="product-details">
+            <h2>Producto de Ejemplo</h2>
+            <p><strong>Descripción:</strong> Un producto de alta calidad, diseñado para satisfacer todas tus
+                necesidades.</p>
+            <p><strong>Precio:</strong> <span id="product-price">100.00</span> BOB</p>
+        </section>
+
+        <section class="payment-methods">
+            <h3>Seleccione el Método de Pago</h3>
+            <fieldset class="payment-options">
+                <legend class="visually-hidden">Métodos de pago</legend>
+
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="Stripe" checked />
+                    <span>Tarjeta (Crédito/Débito)</span>
+                </label>
+
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="Transferencia" />
+                    <span>Transferencia Bancaria</span>
+                </label>
+
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="Efectivo" />
+                    <span>Efectivo</span>
+                </label>
+            </fieldset>
+        </section>
+
+        <form id="payment-form" class="hidden">
+            <div class="form-group">
+                <label for="card-element">Información de la tarjeta</label>
+                <div id="payment-element"></div>
+            </div>
+        </form>
+        <button id="submit-button" class="pay-button">Hacer Pedido</button>
+        <button id="confirm-button" class="pay-button hidden">Confirmar Pago</button>
+
+        <div id="payment-message" role="alert" aria-live="polite"></div>
+    </main>
+
+    <script src="checkout.js"></script>
+</body>
+
+</html>

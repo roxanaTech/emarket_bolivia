@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login de prueba</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #registro {
+            background: #093891;
+        }
+
+        id #resultado {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Login</h2>
+    <form id="loginForm">
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" id="email" name="Email" required>
+        </div>
+
+        <div class="form-group">
+            <label>Contraseña:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+
+        <button type="submit">Ingresar</button>
+        <button type="button" id="registro">Crear cuenta</button>
+    </form>
+
+    <div id="resultado"></div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            // Previene el envío tradicional del formulario
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost/emarket_bolivia/backend/public/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json' // Es una buena práctica indicar que esperas JSON
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                // 1. Leemos la respuesta como JSON UNA SOLA VEZ
+                const data = await response.json();
+
+                // 2. Verificamos si la respuesta del servidor fue exitosa (status 200-299)
+                if (response.ok) {
+                    // Verificamos si el token existe en la respuesta exitosa
+                    if (data.data && data.data.token) {
+                        localStorage.setItem('token', data.data.token);
+                        console.log('Login exitoso. Token guardado:', data.data.token);
+                        // Redirigimos al perfil del usuario
+                        alert("Login exitoso");
+                        window.location.href = '/emarket_bolivia/frontend/perfilUsuario.html';
+                    } else {
+                        // Si la respuesta es OK pero no hay token, es un error inesperado del backend
+                        alert('Respuesta inesperada del servidor.');
+                        console.error('Respuesta exitosa pero sin token:', data);
+                    }
+                } else {
+                    // 3. Si la respuesta NO fue exitosa (status 4xx, 5xx), mostramos el mensaje de error del backend
+                    // El objeto 'data' ya contiene el cuerpo del error (ej: { mensaje: "Credenciales incorrectas" })
+                    alert(data.mensaje || 'Error en el inicio de sesión.');
+                    console.error('Error de login:', data);
+                }
+
+            } catch (error) {
+                // Este bloque captura errores de red (ej: el servidor no responde, no hay conexión, error de CORS)
+                console.error('Error de conexión o en la petición:', error);
+                alert('No se pudo conectar con el servidor. Inténtalo más tarde.');
+            }
+        });
+        document.getElementById('registro').addEventListener('click', function () {
+            window.location.href = '/emarket_bolivia/frontend/registroUsuario.html';
+        });
+
+        // Función para probar la conexión con el servidor (sin cambios, está bien)
+        async function testConnection() {
+            try {
+                const response = await fetch('http://localhost/emarket_bolivia/backend/public/status');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+                console.log('Test de conexión exitoso:', result);
+            } catch (error) {
+                console.error('Test de conexión falló:', error);
+            }
+        }
+
+
+
+        // Ejecutar test de conexión al cargar la página
+        window.addEventListener('load', testConnection);
+    </script>
+
+
+</body>
+
+</html>

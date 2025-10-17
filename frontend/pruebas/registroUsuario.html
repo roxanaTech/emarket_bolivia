@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Registro Usuarios - Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .debug {
+            background: #fff3cd;
+            color: #856404;
+            font-family: monospace;
+            white-space: pre-wrap;
+            border: 1px solid #ffeaa7;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #007bff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Registro de Usuario - Debug</h1>
+
+        <form id="registroForm">
+            <div class="form-group">
+                <label for="nombres">Nombre:</label>
+                <input type="text" id="nombres" name="nombres" required value="Juan Carlos" autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label for="apellidos">Apellido:</label>
+                <input type="text" id="apellidos" name="apellidos" required value="Perez Mamani" autocomplete="ape">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required value="juan@example.com" autocomplete="email">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required value="123456"
+                    autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label for="telefono">Celular:</label>
+                <input type="telefono" id="telefono" name="telefono" value="78888888" autocomplete="new-tel">
+            </div>
+            <div class="form-group">
+                <label for="ci_nit">CI o NIT:</label>
+                <input type="ci_nit" id="ci_nit" name="ci_nit" value="12345678" autocomplete="new-ci_nit">
+            </div>
+
+            <button type="submit" id="submitBtn">Registrar Usuario</button>
+        </form>
+
+        <div id="result"></div>
+        <div id="debug"></div>
+    </div>
+
+    <script>
+        document.getElementById('registroForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const resultDiv = document.getElementById('result');
+            const debugDiv = document.getElementById('debug');
+            const submitBtn = document.getElementById('submitBtn');
+            const ip = "192.168.26.3";
+
+            // Mostrar estado de carga
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registrando...';
+            resultDiv.style.display = 'none';
+            debugDiv.innerHTML = '';
+
+            const data = {
+                nombres: document.getElementById('nombres').value,
+                apellidos: document.getElementById('apellidos').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                telefono: document.getElementById('telefono').value,
+                ci_nit: document.getElementById('ci_nit').value
+            };
+
+            // Debug: Mostrar datos que se van a enviar
+            debugDiv.innerHTML = '<strong>Datos enviados:</strong>\n' + JSON.stringify(data, null, 2);
+
+            try {
+                console.log('Enviando datos:', data);
+
+                // Variable para almacenar la URL base de la API
+                let apiUrl;
+
+                // Obtener el hostname de la URL actual.
+                // Esto funcionará tanto para localhost como para cualquier IP de red local (192.168.x.x, 10.x.x.x, etc.)
+                const host = window.location.hostname;
+
+                // Construir la URL base de la API usando el hostname actual
+                apiUrl = `http://${host}/emarket_bolivia/backend/public`;
+
+                // Dentro de tu función de registro
+                const response = await fetch(`${apiUrl}/usuarios/registro`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+
+                // Verificar si la respuesta es OK
+                if (!response.ok) {
+                    // Intentar obtener el cuerpo de la respuesta incluso en errores
+                    let errorText = '';
+                    try {
+                        const errorResult = await response.json();
+                        errorText = errorResult.mensaje || errorResult.message || errorResult.error || `Error ${response.status}`;
+                    } catch {
+                        errorText = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorText);
+                }
+
+                const result = await response.json();
+                console.log('Response data:', result);
+
+                // Mostrar resultado
+                resultDiv.style.display = 'block';
+
+                if (result.success || result.status === 'success') {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = '<strong>¡Éxito!</strong><br>' + (result.mensaje || result.message || 'Usuario Ingresado');
+                    alert("¡Registro exitoso! Por favor, inicia sesión ahora.");
+                    window.location.href = '/emarket_bolivia/frontend/login.html';
+
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = '<strong>Error:</strong><br>' + (result.mensaje || result.message || result.error || 'Error desconocido');
+                }
+
+                // Mostrar debug de respuesta
+                debugDiv.innerHTML += '\n\n<strong>Respuesta del servidor:</strong>\n' + JSON.stringify(result, null, 2);
+
+            } catch (error) {
+                console.error('Error completo:', error);
+
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = '<strong>Error de conexión:</strong><br>' + error.message;
+
+                // Debug más detallado del error
+                debugDiv.innerHTML += '\n\n<strong>Error capturado:</strong>\n' + error.toString();
+
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    debugDiv.innerHTML += '\n\n<strong>Posibles causas:</strong>\n';
+                    debugDiv.innerHTML += '- Problema de CORS\n';
+                    debugDiv.innerHTML += '- Servidor no disponible\n';
+                    debugDiv.innerHTML += '- URL incorrecta\n';
+                }
+            } finally {
+                // Restaurar botón
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Registrar Usuario';
+            }
+        });
+
+        /* Función para probar la conexión con el servidor
+        async function testConnection() {
+            try {
+                const response = await fetch('http://$ip/market_bolivia/backend/public/status');
+                const result = await response.json();
+                console.log('Test de conexión exitoso:', result);
+            } catch (error) {
+                console.error('Test de conexión falló:', error);
+            }
+        }
+
+        // Ejecutar test de conexión al cargar la página
+        window.addEventListener('load', testConnection);*/
+    </script>
+</body>
+
+</html>
