@@ -1,14 +1,8 @@
 // === js/global.js ===
 
 // --- Configuración Global ---
-<<<<<<< HEAD
-var host = window.location.hostname;
-var apiUrl = `http://${host}/emarket_bolivia/backend/public`;
-var token = localStorage.getItem('token');
-=======
 const host = window.location.hostname;
 const apiUrl = `http://${host}/emarket_bolivia/backend/public`;
->>>>>>> parent of 5d8d2af (actualizando version beta)
 
 // ==========================================================
 // === LÓGICA DE AUTENTICACIÓN Y RENDERIZADO DEL NAVBAR ===

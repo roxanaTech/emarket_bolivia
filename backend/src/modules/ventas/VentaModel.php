@@ -116,39 +116,7 @@ class VentaModel
         $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
-    /**
-     * Cuenta el total de ventas de un vendedor.
-     */
-    public function contarVentasPorVendedor($idVendedor)
-    {
-        $sql = "SELECT COUNT(*) FROM venta WHERE id_vendedor = :id_vendedor";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':id_vendedor', $idVendedor);
-        $stmt->execute();
-        return (int) $stmt->fetchColumn();
-    }
 
-    /**
-     * Lista ventas de un vendedor con límite y offset (paginación).
-     */
-    public function listarVentasPorVendedorPaginado($idVendedor, $offset, $limit)
-    {
-        $sql = "SELECT v.id_venta, v.fecha, v.total_venta, v.estado, v.tipo_pago, v.tipo_entrega,
-                   u.nombres AS nombre_comprador, u.email AS email_comprador
-            FROM venta v
-            JOIN usuario u ON v.id_comprador = u.id_usuario
-            WHERE v.id_vendedor = :id_vendedor
-            ORDER BY v.fecha DESC
-            LIMIT :limit OFFSET :offset";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':id_vendedor', $idVendedor, \PDO::PARAM_INT);
-        $stmt->bindParam(':limit', $limit, \PDO::PARAM_INT);
-        $stmt->bindParam(':offset', $offset, \PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-    }
     /**
      * Actualiza el estado de una venta.
      */

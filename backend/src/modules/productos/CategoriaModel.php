@@ -20,7 +20,7 @@ class CategoriaModel
      */
     public function obtenerTodasCategorias()
     {
-        $sql = "SELECT id_categoria as id, nombre
+        $sql = "SELECT id_categoria, nombre, descripcion, codigo 
                 FROM categoria 
                 ORDER BY id_categoria ASC";
         $stmt = $this->db->prepare($sql);
@@ -43,20 +43,6 @@ class CategoriaModel
                 ORDER BY c.id_categoria ASC, s.id_subcategoria ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-    }
-    /**
-     * Obtiene todas las subcategorías de una categoria.
-     *
-     * @return array Lista de subcategorías con nombre de categoría.
-     */
-    public function obtenerSubcategoriasDeCategoria($categoria)
-    {
-        $sql = "SELECT id_subcategoria as id, nombre
-                FROM subcategoria 
-                WHERE id_categoria = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$categoria]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

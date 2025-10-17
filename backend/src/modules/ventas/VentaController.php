@@ -166,46 +166,21 @@ class VentaController
     /**
      * Lista las ventas del vendedor autenticado.
      */
-    /**
-     * Lista las ventas del vendedor autenticado con paginación.
-     */
-    public function listarVentasVendedor($payload, int $pagina = 1, int $porPagina = 10): array
+    public function listarVentasVendedor($payload): array
     {
         $idUsuario = $payload->sub;
-
-        // Obtener id_vendedor desde usuario
+        // Obtener id_vendedor desde usuario (asumiendo relación en BD)
         $sql = "SELECT id_vendedor FROM vendedor WHERE id_usuario = :id_usuario";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':id_usuario', $idUsuario);
         $stmt->execute();
         $vendedor = $stmt->fetch(\PDO::FETCH_ASSOC);
-
         if (!$vendedor) {
             return ResponseHelper::error('No eres vendedor.', 403);
         }
 
-        // Obtener total de ventas
-        $totalVentas = $this->ventaModel->contarVentasPorVendedor($vendedor['id_vendedor']);
-
-        // Calcular offset
-        $offset = ($pagina - 1) * $porPagina;
-
-        // Obtener ventas paginadas
-        $ventas = $this->ventaModel->listarVentasPorVendedorPaginado(
-            $vendedor['id_vendedor'],
-            $offset,
-            $porPagina
-        );
-
-        $totalPaginas = ceil($totalVentas / $porPagina);
-
-        return ResponseHelper::success('Ventas obtenidas.', [
-            'ventas' => $ventas,
-            'total' => $totalVentas,
-            'pagina' => $pagina,
-            'por_pagina' => $porPagina,
-            'total_paginas' => $totalPaginas
-        ]);
+        $ventas = $this->ventaModel->listarVentasPorVendedor($vendedor['id_vendedor']);
+        return ResponseHelper::success('Ventas obtenidas.', $ventas);
     }
 
     /**

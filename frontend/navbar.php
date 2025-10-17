@@ -26,13 +26,7 @@
                 <a href="principal.php" class="font-medium text-sm md:text-base hover:text-blue-300">Inicio</a>
                 <a href="productos-ofertas.php" class="font-medium text-sm md:text-base hover:text-blue-300">Ofertas</a>
                 <a href="lista-de-categorias.php" class="hidden md:inline font-medium text-sm md:text-base hover:text-blue-300">Categorías</a>
-<<<<<<< HEAD
-                <!-- Link "Empieza a vender" (se condicionarará con JS) 
-                <a id="start-selling-link" href="#" class="font-bold text-sm md:text-base hover:text-blue-300">Empieza a vender</a>-->
-                <a href="ayuda.php" class="md:block font-medium text-sm md:text-base hover:text-blue-300">Ayuda</a>
-=======
                 <a href="#" class="font-medium text-sm md:text-base hover:text-blue-300">Ayuda</a>
->>>>>>> parent of 5d8d2af (actualizando version beta)
             </div>
             <div id="auth-container">
                 <a href="login.php" class="bg-blue-700 hover:bg-blue-800 px-3 py-1 my-4 text-sm rounded-md transition">Iniciar Sesión</a>

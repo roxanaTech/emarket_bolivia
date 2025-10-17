@@ -99,10 +99,6 @@ class ProductoService
         $datosPublicacion = [
             'id_producto' => $producto['id_producto'],
             'id_vendedor' => $producto['id_vendedor'],
-            'id_categoria' => $producto['id_categoria'],
-            'categoria' => $producto['nombre_categoria'],
-            'id_subcategoria' => $producto['id_subcategoria'],
-            'subcategoria' => $producto['nombre_subcategoria'],
             'nombre' => $producto['nombre'],
             'descripcion' => $producto['descripcion'],
             'marca' => $producto['marca'],

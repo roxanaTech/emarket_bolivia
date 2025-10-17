@@ -162,7 +162,7 @@
                     autocomplete="new-password" />
             </div>
 
-
+            <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
 
             <div class="d-grid gap-2 mt-3">
                 <button type="submit" class="btn btn-login">Iniciar Sesión</button>
@@ -193,8 +193,8 @@
 
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                host = window.location.hostname;
-                apiUrl = `http://${host}/emarket_bolivia/backend/public`;
+                const host = window.location.hostname;
+                const apiUrl = `http://${host}/emarket_bolivia/backend/public`;
 
                 try {
                     const response = await fetch(`${apiUrl}/login`, {
@@ -210,11 +210,7 @@
 
                     if (response.ok && data.data?.token) {
                         localStorage.setItem('token', data.data.token);
-<<<<<<< HEAD:frontend/login.php
-                        window.location.href = 'principal.php';
-=======
                         window.location.href = 'perfilUsuario.html';
->>>>>>> parent of 5d8d2af (actualizando version beta):frontend/login.html
                     } else {
                         alert(data.mensaje || 'Credenciales incorrectas');
                     }

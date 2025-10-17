@@ -9,8 +9,8 @@
             <div>
                 <h5 class="text-lg font-semibold text-white-800 mb-4">Quiénes somos</h5>
                 <ul class="space-y-2">
-                    <li><a href="mision.php" class="text-white-600 hover:font-bold hover:no-underline transition">Misión</a></li>
-                    <li><a href="mision.php" class="text-white-600 hover:font-bold hover:no-underline transition">Visión</a></li>
+                    <li><a href="#" class="text-white-600 hover:font-bold hover:no-underline transition">Misión</a></li>
+                    <li><a href="#" class="text-white-600 hover:font-bold hover:no-underline transition">Visión</a></li>
                 </ul>
             </div>
 
@@ -18,8 +18,8 @@
             <div>
                 <h5 class="text-lg font-semibold text-white-800 mb-4">Contacto</h5>
                 <ul class="space-y-2">
-                    <li><a href="ayuda.php" class="text-white-600 hover:font-bold hover:no-underline transition">Ayuda / FAQ</a></li>
-                    <li><a href="ayuda.php" class="text-white-600 hover:font-bold hover:no-underline transition">Atención al cliente</a></li>
+                    <li><a href="#" class="text-white-600 hover:font-bold hover:no-underline transition">Ayuda / FAQ</a></li>
+                    <li><a href="#" class="text-white-600 hover:font-bold hover:no-underline transition">Atención al cliente</a></li>
                 </ul>
             </div>
 
@@ -27,8 +27,8 @@
             <div>
                 <h5 class="text-lg font-semibold text-white-800 mb-4">Políticas</h5>
                 <ul class="space-y-2">
-                    <li><a href="terminos-condiciones.php" class="text-white-600 hover:font-bold hover:no-underline transition">Términos y condiciones</a></li>
-                    <li><a href="politica-privacidad.php" class="text-white-600 hover:font-bold hover:no-underline transition">Política de privacidad</a></li>
+                    <li><a href="#" class="text-white-600 hover:font-bold hover:no-underline transition">Términos y condiciones</a></li>
+                    <li><a href="#" class="text-white-600 hover:font-bold hover:no-underline transition">Política de privacidad</a></li>
                 </ul>
             </div>
 
